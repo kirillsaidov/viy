@@ -1,5 +1,7 @@
 # custom
+.DS_Store
 bin/
+build/
 lib/
 __internal/
 
