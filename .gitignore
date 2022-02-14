@@ -4,6 +4,8 @@ bin/
 build/
 lib/
 __internal/
+__pycache__/
+*.pt
 
 # Prerequisites
 *.d
