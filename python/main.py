@@ -20,6 +20,9 @@ if not cap.isOpened():
 while True:
 	# get new frame
 	retval, frame = cap.read()
+
+	assert retval, 'ERROR: Failed to capture frame!'
+
 	originalDimensions = frame.shape
 
 	# resize the image to model's training size
