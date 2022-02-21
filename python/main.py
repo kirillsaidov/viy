@@ -32,6 +32,7 @@ while True:
 	start_t = time()
 	modelOutput = model.detect(frame)
 	frame = model.plotBoxes(modelOutput, frame, [(0, 255, 0), (255, 0, 0)])
+	print(model.getBoxData(modelOutput, frame))
 	stop_t = time()
 
 	# resize image back to original size

@@ -45,6 +45,28 @@ class YOLOv5Model:
 	"""
 	def classToString(self, id):
 		return self.classes[int(id)]
+	
+	
+	"""
+	Returns a list of tuples (x1, y1, x2, y2, label)
+	"""
+	def getBoxData(self, modelOutput, frame, conf = 0.5):
+		labels, coord = modelOutput
+		x_size, y_size = frame.shape[1], frame.shape[0]
+
+		# save data
+		boxData = list()
+		nlabels = len(labels)
+		for i in range(nlabels):
+			j = coord[i]
+
+			# check confidence
+			if j[4] >= conf:
+				# save data
+				x1, y1, x2, y2 = int(j[0]*x_size), int(j[1]*y_size), int(j[2]*x_size), int(j[3]*y_size)
+				boxData.append((x1, y1, x2, y2, labels[i]))
+
+		return boxData
 
 	"""
 	Plots boudning boxes around detected objects
