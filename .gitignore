@@ -6,6 +6,7 @@ lib/
 __internal/
 __pycache__/
 *.pt
+data/
 
 # Prerequisites
 *.d
