@@ -1,5 +1,5 @@
 import sys
-from time import time
+from time import time, sleep
 
 import cv2
 import numpy as np
@@ -31,8 +31,7 @@ while True:
 	# detection and plotting
 	start_t = time()
 	modelOutput = model.detect(frame)
-	frame = model.plotBoxes(modelOutput, frame, [(0, 255, 0), (255, 0, 0)])
-	print(model.getBoxData(modelOutput, frame))
+	frame = model.plotBoxes(modelOutput, frame)
 	stop_t = time()
 
 	# resize image back to original size
@@ -49,6 +48,8 @@ while True:
 
 	if cv2.waitKey(5) & 0xFF == 27:
 		break
+
+	sleep(0.01)
 
 # close the webcam
 cap.release()
