@@ -1,15 +1,21 @@
-import os
 import glob
 import pathlib
+import cv2
 import numpy as np
+from io import open
+from PIL import Image
 
-# CNN
+# PyTorch
 import torch
 import torch.nn as nn
 import torchvision
 from torchvision.transforms import transforms
+from torchvision.models import squeezenet1_1
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
+import torch.functional as F
+
+# yolov5 model
 from yolov5model import getDevice
 
 train_data_path = '../data/age/train'
@@ -273,20 +279,3 @@ for epoch in range(epochs):
         model_scripted = torch.jit.script(model)
         model_scripted.save('best_model.pt')
         best_accuracy = test_accuracy
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
