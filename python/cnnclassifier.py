@@ -93,12 +93,12 @@ class CNNClassifier(nn.Module):
     Creates CNN layers
     """
     def createLayers(self):
-        self.layer_1 = self.__addLayerType1()
-        self.layer_2 = self.__addLayerType2()
-        self.layer_3 = self.__addLayerType2()
-        self.layer_4 = self.__addLayerType3()
-        self.layer_5 = self.__addLayerType1()
-        self.layer_6 = self.__addLayerFC()
+        self.layer_1 = self.__addLayerType1(4)
+        self.layer_2 = self.__addLayerType2(2)
+        self.layer_3 = self.__addLayerType3(2)
+        self.layer_4 = self.__addLayerType2(4)
+        self.layer_5 = self.__addLayerType3(4)
+        self.layer_fc = self.__addLayerFC()
 
     """
     Feed forward function
@@ -114,7 +114,7 @@ class CNNClassifier(nn.Module):
         out = out.view(out.size(0), -1)
 
         # feed the data into fully_connected_layer
-        out = self.layer_6(out)
+        out = self.layer_fc(out)
 
         return out
 
@@ -285,7 +285,7 @@ def train(model,
     for epoch in range(0, epochs):
         # ---------------------- TRAINING ---------------------------
         if verbose:
-            print(f"==> Training epoch {epoch}/{epochs}:")
+            print(f"==> Training epoch {epoch}/{epochs - 1}:")
 
         model.train()
 
