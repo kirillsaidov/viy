@@ -93,13 +93,14 @@ class CNNClassifier(nn.Module):
     Creates CNN layers
     """
     def createLayers(self):
-        self.layer_1 = self.__addLayerType1(4)
+        self.layer_1 = self.__addLayerType1(2)
 
-        self.layer_2 = self.__addLayerType2(2)
-        self.layer_3 = self.__addLayerType3(2)
-        # self.layer_4 = self.__addLayerType2(4)
-        # self.layer_5 = self.__addLayerType3(4)
-
+        self.layer_2 = self.__addLayerType2(4)
+        self.layer_3 = self.__addLayerType2(8)
+        self.layer_4 = self.__addLayerType2(8)
+        self.layer_5 = self.__addLayerType3(1/2)
+        self.layer_6 = self.__addLayerType1(1/2)
+        
         self.layer_fc = self.__addLayerFC()
 
     """
@@ -109,9 +110,12 @@ class CNNClassifier(nn.Module):
         out = self.layer_1(X)
         out = self.layer_2(out)
         out = self.layer_3(out)
-        # out = self.layer_4(out)
-        # out = self.layer_5(out)
-
+        out = self.layer_4(out)
+        out = self.layer_5(out)
+        out = self.layer_6(out)
+        #out = self.layer_7(out)
+        #out = self.layer_8(out)
+        
         # reshaping the matrix into vector of data
         out = out.view(out.size(0), -1)
 
@@ -126,15 +130,6 @@ class CNNClassifier(nn.Module):
     def exportModel(self, model_name = "last.pt"):
         model_scripted = torch.jit.script(self)
         model_scripted.save(model_name)
-
-    """
-    Load the TorchScript model
-    """
-    def loadModel(self, model_name = None):
-        if model_name:
-            print("Load model.")
-        else:
-            print("Model name is not provided; nothing to load.")
 
     """
     [private] Creates a the 1st layer in CNN
@@ -174,7 +169,9 @@ class CNNClassifier(nn.Module):
                 stride = self.stride,
                 padding = self.padding
             ),
-            nn.ReLU()
+            nn.ReLU(),
+            #nn.Dropout(p = 0.15),
+            #nn.ReLU()
         )
 
         # update values
@@ -195,7 +192,7 @@ class CNNClassifier(nn.Module):
                 padding = self.padding
             ),
             nn.BatchNorm2d(num_features = int(self.img_channels * outMultFactor)),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # update values
@@ -365,3 +362,119 @@ def train(model,
             best_accuracy = test_accuracy
 
     # --------------- END  OF TRAINING AND EVALUATION ---------------
+
+"""
+Loads the TorchScript model
+"""
+def loadModel(model_load_path = None):
+    assert model_load_path, "ERROR: model load path not provided! Exiting..."
+
+    # load a torchscript model
+    model = torch.jit.load(model_load_path)
+    model.eval()
+
+    return model
+
+"""
+Predicts image class
+    verbose = verbosity to print every step
+"""
+def predict(model = None, img_path = None, transformer = None, classes_path = None, verbose = True):
+    assert model, "ERROR: model argument not provided! Exiting..."
+    assert img_path, "ERROR: imgs path not provided! Exiting..."
+    assert transformer, "ERROR: data transformer not provided! Exiting..."
+    assert classes_path, "ERROR: path to classes file not provided! Exiting..."
+
+    # find all imgs in the directory, if a single img is given, convert it into an array
+    # and continue
+    if '.jpg' in img_path:
+        img_path = [img_path]
+    else:
+        img_path = glob.glob(img_path + '/*.jpg')
+       
+    # read classes from a file
+    classes = []
+    with open(classes_path, "r") as f:
+        lines = [line.rstrip() for line in f]
+        classes = lines[0].split(";")
+
+    if verbose:
+        print(f"==> Found {len(img_path)} images...")
+        print(f"==> Loading {classes_path}")
+        print(f"==> Loaded: {classes}")
+
+    # predict
+    pred = []
+    for i in img_path:
+        if verbose:
+            print(f"Predicting: {i}")
+
+        # load image
+        img = Image.open(i)
+
+        # transform data
+        img_tensor = transformer(img).float()
+
+        # PyTorch treats all images as batches. We need to insert an extra batch dimension.
+        img_tensor = img_tensor.unsqueeze_(0)
+
+        # send images to GPU if available
+        if torch.cuda.is_available():
+            img_tensor.cuda()    
+    
+        # predict
+        out = model(img_tensor)
+    
+        # get the class with the maximum probability
+        class_id = out.data.numpy().argmax()
+    
+        # get class name
+        pred.append({'in': i, 'out': classes[class_id]})
+    
+    if verbose:
+        print(f"==> DONE.\n")
+
+    return pred
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

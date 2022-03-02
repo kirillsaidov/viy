@@ -59,8 +59,8 @@ def predict(img_path, transformer):
     img_tensor = img_tensor.unsqueeze_(0)
 
     # send images to GPU if available
-    if torch.cuda.is_available():
-        image_tensor.cuda()    
+    #if torch.cuda.is_available():
+    #    img_tensor.cuda()    
     
     # predict
     out = model(img_tensor)
@@ -78,7 +78,7 @@ pred_data_path = '../data/age/pred'
 pred_imgs = glob.glob(pred_data_path + '/*.jpg')
 
 # load model with best weights
-model = torch.jit.load('best_model.pt')
+model = torch.jit.load('best.pt')
 model.eval()
 
 pred_dict={}
