@@ -94,10 +94,12 @@ class CNNClassifier(nn.Module):
     """
     def createLayers(self):
         self.layer_1 = self.__addLayerType1(4)
+
         self.layer_2 = self.__addLayerType2(2)
         self.layer_3 = self.__addLayerType3(2)
-        self.layer_4 = self.__addLayerType2(4)
-        self.layer_5 = self.__addLayerType3(4)
+        # self.layer_4 = self.__addLayerType2(4)
+        # self.layer_5 = self.__addLayerType3(4)
+
         self.layer_fc = self.__addLayerFC()
 
     """
@@ -107,8 +109,8 @@ class CNNClassifier(nn.Module):
         out = self.layer_1(X)
         out = self.layer_2(out)
         out = self.layer_3(out)
-        out = self.layer_4(out)
-        out = self.layer_5(out)
+        # out = self.layer_4(out)
+        # out = self.layer_5(out)
 
         # reshaping the matrix into vector of data
         out = out.view(out.size(0), -1)
