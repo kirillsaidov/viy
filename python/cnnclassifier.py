@@ -246,12 +246,20 @@ def train(model,
     for i in classes:
         if i.startswith("."):
             classes.remove(i)
+    
+    # save classes
     num_classes = len(classes)
+    with open("classes.txt", "w") as f:
+        for i in range(0, num_classes - 1):
+            f.write(classes[i] + ";")
+        f.write(classes[num_classes - 1])
 
     assert model.num_classes == num_classes, f"Number of classes specified ({model.num_classes}) is not the same as classes found ({num_classes})."
 
     if verbose:
+        print(f"==> Device: {getDevice()}")
         print(f"==> {num_classes} classes found.")
+        print(f"==> Classes saved to classes.txt")
         print("==> Creating data loaders...")
 
     # create a dataloader to load and transform the data automatically
