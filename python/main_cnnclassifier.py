@@ -8,11 +8,27 @@ from yolov5model import getDevice
 
 train_path = '../data/age/train'
 test_path = '../data/age/test'
-epochs = 64
+epochs = 32
+batch_size = 8
+lr = 0.05
 
 device = torch.device(getDevice())
-model = cnn.CNNClassifier(num_classes = 3, batch_size = 12).to(device)
-cnn.train(model = model, train_path = train_path, test_path = test_path, epochs = epochs)
+model = cnn.CNNClassifier(
+    num_classes = 3, 
+    batch_size = batch_size,
+    img_width = 128,
+    img_height = 128,
+    img_norm_mean = [0.63154647, 0.48489257, 0.41346439],
+    img_norm_std = [0.21639832, 0.19404103, 0.18550038]
+).to(device)
+
+cnn.train(
+    model = model, 
+    train_path = train_path, 
+    test_path = test_path, 
+    epochs = epochs,
+    learning_rate = lr
+)
 
 
 # PREDICTING

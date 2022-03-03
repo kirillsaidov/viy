@@ -42,6 +42,7 @@ class CNNClassifier(nn.Module):
         padding = add padding to an image (1 by default)
         stride = matrix sliding speed (1 by default)
         random_horizontal_flip = adding variety from 0 to 1 (0.5 by default)
+        random_rotation = rotate images randomly in degrees
         img_norm_mean = mean of [r, g, b] values of images ([0.5, 0.5, 0.5] by default)
         img_norm_std = std deviation of [r, g, b] values of images ([0.5, 0.5, 0.5] by default)
         img_channels = number of channels in an image ([r, g, b] = 3 by default)
@@ -56,6 +57,7 @@ class CNNClassifier(nn.Module):
         padding = 1,
         stride = 1,
         random_horizontal_flip = 0.5,
+        random_rotation = 30, 
         img_norm_mean = [0.5, 0.5, 0.5],
         img_norm_std = [0.5, 0.5, 0.5],
         img_channels = 3
@@ -77,7 +79,8 @@ class CNNClassifier(nn.Module):
         if transformer == None:
             self.transformer = transforms.Compose([
                 transforms.Resize((img_width, img_height)),
-                transforms.RandomHorizontalFlip(0.5),
+                transforms.RandomHorizontalFlip(random_horizontal_flip),
+                transforms.RandomRotation(random_rotation),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean = img_norm_mean,
@@ -93,15 +96,42 @@ class CNNClassifier(nn.Module):
     Creates CNN layers
     """
     def createLayers(self):
-        self.layer_1 = self.__addLayerType1(2)
+        self.layer_1 = self.__addLayerConv__(2)
+        self.layer_2 = self.__addLayerConv__(1)
+        self.layer_3 = self.__addLayerConv__(1)
+        self.layer_4 = self.__addLayerMaxPool__()
+        
+        self.layer_5 = self.__addLayerConv__(2)
+        self.layer_6 = self.__addLayerConv__(1)
+        self.layer_7 = self.__addLayerMaxPool__()
 
-        self.layer_2 = self.__addLayerType2(4)
-        self.layer_3 = self.__addLayerType2(8)
-        self.layer_4 = self.__addLayerType2(8)
-        self.layer_5 = self.__addLayerType3(1/2)
-        self.layer_6 = self.__addLayerType1(1/2)
+        # self.layer_8 = self.__addLayerConv__(2)
+        # self.layer_9 = self.__addLayerConv__(1)
+        # self.layer_10 = self.__addLayerMaxPool__()
+
+        # self.layer_11 = self.__addLayerConv__(2)
+        # self.layer_12 = self.__addLayerConv__(1)
+        # self.layer_13 = self.__addLayerConv__(1)
+        # self.layer_14 = self.__addLayerMaxPool__()
+
+        # self.layer_15 = self.__addLayerConv__(2)
+        # self.layer_16 = self.__addLayerConv__(1)
+        # self.layer_17 = self.__addLayerConv__(1)
+        # self.layer_18 = self.__addLayerMaxPool__()
+
+        self.layer_fc = self.__addLayerClassifier__()
+
+        """
+        self.layer_1 = self.__addLayerConvReluPool(2)
+        self.layer_2 = self.__addLayerConvReluDropout(4)
+        self.layer_3 = self.__addLayerConvReluPool(4)
+        self.layer_4 = self.__addLayerConvBatchNorm(8)
+        self.layer_5 = self.__addLayerConvReluPool(4)
+        self.layer_6 = self.__addLayerConvReluDropout(1/2)
+        self.layer_7 = self.__addLayerConvReluPool(1/2)
         
         self.layer_fc = self.__addLayerFC()
+        """
 
     """
     Feed forward function
@@ -113,11 +143,21 @@ class CNNClassifier(nn.Module):
         out = self.layer_4(out)
         out = self.layer_5(out)
         out = self.layer_6(out)
-        #out = self.layer_7(out)
-        #out = self.layer_8(out)
+        out = self.layer_7(out)
+        # out = self.layer_8(out)
+        # out = self.layer_9(out)
+        # out = self.layer_10(out)
+        # out = self.layer_11(out)
+        # out = self.layer_12(out)
+        # out = self.layer_13(out)
+        # out = self.layer_14(out)
+        # out = self.layer_15(out)
+        # out = self.layer_16(out)
+        # out = self.layer_17(out)
+        # out = self.layer_18(out)
         
         # reshaping the matrix into vector of data
-        out = out.view(out.size(0), -1)
+        # out = out.view(out.size(0), -1)
 
         # feed the data into fully_connected_layer
         out = self.layer_fc(out)
@@ -134,7 +174,7 @@ class CNNClassifier(nn.Module):
     """
     [private] Creates a the 1st layer in CNN
     """
-    def __addLayerType1(self, outMultFactor = 4):
+    def __addLayerConvReluPool(self, outMultFactor = 4):
         # create a new convolutinal layer
         conv_layer = nn.Sequential(
                 nn.Conv2d(
@@ -146,7 +186,8 @@ class CNNClassifier(nn.Module):
                 ),
                 nn.BatchNorm2d(num_features = int(self.img_channels * outMultFactor)),
                 nn.ReLU(),
-                nn.MaxPool2d(kernel_size = 2)
+                #nn.MaxPool2d(kernel_size = 2)
+                AvgPool2d(kernel_size = 2)
             )
 
         # update values
@@ -159,7 +200,7 @@ class CNNClassifier(nn.Module):
     """
     [private] Creates type 2 layer in CNN
     """
-    def __addLayerType2(self, outMultFactor = 2):
+    def __addLayerConvReluDropout(self, outMultFactor = 2):
         # create a new convolutional layer
         conv_layer = nn.Sequential(
             nn.Conv2d(
@@ -170,18 +211,82 @@ class CNNClassifier(nn.Module):
                 padding = self.padding
             ),
             nn.ReLU(),
-            #nn.Dropout(p = 0.15),
-            #nn.ReLU()
+            nn.Dropout(p = 0.15),
+            nn.ReLU()
         )
 
         # update values
         self.img_channels = int(self.img_channels * outMultFactor)
 
         return conv_layer
+    
+    """
+    [private] Adds a convolutional layer
+    """
+    def __addLayerConv__(self, outMultFactor = 2):
+        # create a new convolutional layer
+        conv_layer = nn.Sequential(
+            nn.Conv2d(
+                in_channels = self.img_channels,           # in the previous layer out_channel = 12
+                out_channels = int(self.img_channels * outMultFactor),
+                kernel_size = self.kernel_size,
+                stride = self.stride,
+                padding = self.padding
+            ),
+            nn.ReLU()
+        )
+
+        # update values
+        self.img_channels = int(self.img_channels * outMultFactor)
+
+        return conv_layer
+
+    def __addLayerMaxPool__(self, kernel_size = 2):
+        pool_layer = nn.Sequential(
+            nn.AvgPool2d(kernel_size = kernel_size),
+        )
+
+        self.img_width = self.img_width/kernel_size
+        self.img_height = self.img_height/kernel_size
+        
+        return pool_layer
+    
+    def __addLayerClassifier__(self):
+        # in-out features data
+        in_out_1 = (
+            int(self.img_channels * self.img_width * self.img_height),
+            int(self.img_channels * self.img_width * self.img_height / 4)
+        )
+        in_out_2 = (in_out_1[1], int(in_out_1[1] / 2))
+        in_out_3 = (in_out_2[1], self.num_classes)
+
+        classifier_layer = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(
+                in_features = in_out_1[0],
+                out_features = in_out_1[1]
+            ),
+            nn.ReLU(),
+            # nn.Dropout(p = 0.25),
+            nn.Linear(
+                in_features = in_out_2[0],
+                out_features = in_out_2[1]
+            ),
+            nn.ReLU(),
+            # nn.Dropout(p = 0.25),
+            nn.Linear(
+                in_features = in_out_3[0],
+                out_features = in_out_3[1]
+            ),
+            # nn.Softmax(dim = 1)
+        )
+
+        return classifier_layer
+
     """
     [private] Creates a type 3 layer in CNN
     """
-    def __addLayerType3(self, outMultFactor = 2):
+    def __addLayerConvBatchNorm(self, outMultFactor = 2):
         # create a new convolutional layer
         conv_layer = nn.Sequential(
             nn.Conv2d(
@@ -204,10 +309,17 @@ class CNNClassifier(nn.Module):
     [private] Creates a fully connected (final) layer in CNN
     """
     def __addLayerFC(self):
-        fc_layer = nn.Linear(
-            in_features = int(self.img_channels * self.img_width * self.img_height),
-            out_features = int(self.num_classes)
+        fc_layer = nn.Sequential(
+            nn.Linear(
+                in_features = int(self.img_channels * self.img_width * self.img_height),
+                out_features = int(self.num_classes)
+            ),
+            nn.Softmax(dim = 1)
         )
+        #fc_layer = nn.Linear(
+        #    in_features = int(self.img_channels * self.img_width * self.img_height),
+        #    out_features = int(self.num_classes)
+        #)
 
         return fc_layer
 
@@ -226,7 +338,7 @@ def train(model,
     train_path = None,
     test_path = None,
     epochs = None,
-    learning_rate = 0.5,
+    learning_rate = 0.05,
     weight_decay = 0.01,
     model_name = "best.pt",
     export_model = True,
@@ -300,8 +412,8 @@ def train(model,
         train_loss = 0.0
         for i, (images, labels) in enumerate(trainDataLoader):
             if torch.cuda.is_available():
-                images = Variable(images.cuda())
-                labels = Variable(labels.cuda())
+                images = images.cuda()
+                labels = labels.cuda()
 
             # zero out the gradients at the start of a new batch
             optimizer.zero_grad()
@@ -337,8 +449,8 @@ def train(model,
         test_accuracy = 0.0
         for i, (images, labels) in enumerate(testDataLoader):
             if torch.cuda.is_available():
-                images = Variable(images.cuda())
-                labels = Variable(labels.cuda())
+                images = images.cuda()
+                labels = labels.cuda()
 
             # get prediction
             outputs = model(images)
@@ -349,9 +461,9 @@ def train(model,
 
         # --------------------- MANAGE RESULTS ----------------------
         if verbose:
-            print(f"\t---> TrainLoss:\t{train_loss:.3f}")
-            print(f"\t---> TrainAccr:\t{train_accuracy:.3f}")
-            print(f"\t---> TestAccr: \t{test_accuracy:.3f}")
+            print(f"\t---> train_loss: {train_loss:.3f}")
+            print(f"\t---> train_acc:  {train_accuracy:.3f}")
+            print(f"\t---> test_acc:   {test_accuracy:.3f}")
 
         # save the best model
         if export_model and test_accuracy > best_accuracy:
