@@ -84,6 +84,8 @@ class CNNClassifier(nn.Module):
                 transforms.RandomHorizontalFlip(random_horizontal_flip),
                 transforms.RandomRotation(random_rotation),
                 transforms.RandomPerspective(),
+                transforms.RandomGrayscale(p = 0.5),
+                transforms.ColorJitter(0.5, 0.5, 0.5, 0.5),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean = img_norm_mean,
@@ -107,21 +109,20 @@ class CNNClassifier(nn.Module):
         self.layer_5 = self.__addLayerConv__(2)
         self.layer_6 = self.__addLayerConv__(1)
         self.layer_7 = self.__addLayerMaxPool__()
-
-        # self.layer_8 = self.__addLayerConv__(2)
-        # self.layer_9 = self.__addLayerConv__(1)
-        # self.layer_10 = self.__addLayerMaxPool__()
-
-        # self.layer_11 = self.__addLayerConv__(2)
-        # self.layer_12 = self.__addLayerConv__(1)
-        # self.layer_13 = self.__addLayerConv__(1)
-        # self.layer_14 = self.__addLayerMaxPool__()
-
-        # self.layer_15 = self.__addLayerConv__(2)
-        # self.layer_16 = self.__addLayerConv__(1)
-        # self.layer_17 = self.__addLayerConv__(1)
-        # self.layer_18 = self.__addLayerMaxPool__()
-
+        
+        self.layer_8 = self.__addLayerConv__(2)
+        self.layer_9 = self.__addLayerConv__(1)
+        self.layer_10 = self.__addLayerMaxPool__()
+        """
+        self.layer_11 = self.__addLayerConv__(2)
+        self.layer_12 = self.__addLayerConv__(1)
+        self.layer_13 = self.__addLayerConv__(1)
+        self.layer_14 = self.__addLayerMaxPool__()
+        self.layer_15 = self.__addLayerConv__(2)
+        self.layer_16 = self.__addLayerConv__(1)
+        self.layer_17 = self.__addLayerConv__(1)
+        self.layer_18 = self.__addLayerMaxPool__()
+        """
         self.layer_fc = self.__addLayerClassifier__()
 
     """
@@ -132,21 +133,25 @@ class CNNClassifier(nn.Module):
         out = self.layer_2(out)
         out = self.layer_3(out)
         out = self.layer_4(out)
+        
         out = self.layer_5(out)
         out = self.layer_6(out)
         out = self.layer_7(out)
-        # out = self.layer_8(out)
-        # out = self.layer_9(out)
-        # out = self.layer_10(out)
-        # out = self.layer_11(out)
-        # out = self.layer_12(out)
-        # out = self.layer_13(out)
-        # out = self.layer_14(out)
-        # out = self.layer_15(out)
-        # out = self.layer_16(out)
-        # out = self.layer_17(out)
-        # out = self.layer_18(out)
         
+        out = self.layer_8(out)
+        out = self.layer_9(out)
+        out = self.layer_10(out)
+        
+        """
+        out = self.layer_11(out)
+        out = self.layer_12(out)
+        out = self.layer_13(out)
+        out = self.layer_14(out)
+        out = self.layer_15(out)
+        out = self.layer_16(out)
+        out = self.layer_17(out)
+        out = self.layer_18(out)
+        """
         # reshaping the matrix into vector of data
         # out = out.view(out.size(0), -1)
 
@@ -185,7 +190,7 @@ class CNNClassifier(nn.Module):
 
     def __addLayerMaxPool__(self, kernel_size = 2):
         pool_layer = nn.Sequential(
-            nn.AvgPool2d(kernel_size = kernel_size),
+            nn.MaxPool2d(kernel_size = kernel_size, stride = kernel_size),
         )
 
         self.img_width = self.img_width/kernel_size
