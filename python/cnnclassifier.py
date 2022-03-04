@@ -1,7 +1,9 @@
 """
 README: IMPORTANT!
 
-    BEFORE USING THE MODEL MODIFY THE createLayers() AND forward() FUNCTIONS. ADD OR REMOVE LAYERS TO YOUR LIKING, OR USE THE DEFAULTS. IN THAT CASE THERE IS NOTHING TO CHANGE.
+    BEFORE USING THE MODEL MODIFY THE createLayers() AND forward() FUNCTIONS. 
+    ADD OR REMOVE LAYERS TO YOUR LIKING, OR USE THE DEFAULTS. 
+    IN THAT CASE THERE IS NOTHING TO CHANGE.
 """
 
 import sys
@@ -81,6 +83,7 @@ class CNNClassifier(nn.Module):
                 transforms.Resize((img_width, img_height)),
                 transforms.RandomHorizontalFlip(random_horizontal_flip),
                 transforms.RandomRotation(random_rotation),
+                transforms.RandomPerspective(),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean = img_norm_mean,
@@ -121,18 +124,6 @@ class CNNClassifier(nn.Module):
 
         self.layer_fc = self.__addLayerClassifier__()
 
-        """
-        self.layer_1 = self.__addLayerConvReluPool(2)
-        self.layer_2 = self.__addLayerConvReluDropout(4)
-        self.layer_3 = self.__addLayerConvReluPool(4)
-        self.layer_4 = self.__addLayerConvBatchNorm(8)
-        self.layer_5 = self.__addLayerConvReluPool(4)
-        self.layer_6 = self.__addLayerConvReluDropout(1/2)
-        self.layer_7 = self.__addLayerConvReluPool(1/2)
-        
-        self.layer_fc = self.__addLayerFC()
-        """
-
     """
     Feed forward function
     """
@@ -171,56 +162,7 @@ class CNNClassifier(nn.Module):
         model_scripted = torch.jit.script(self)
         model_scripted.save(model_name)
 
-    """
-    [private] Creates a the 1st layer in CNN
-    """
-    def __addLayerConvReluPool(self, outMultFactor = 4):
-        # create a new convolutinal layer
-        conv_layer = nn.Sequential(
-                nn.Conv2d(
-                    in_channels = self.img_channels,
-                    out_channels = int(self.img_channels * outMultFactor),
-                    kernel_size = self.kernel_size,
-                    stride = self.stride,
-                    padding = self.padding
-                ),
-                nn.BatchNorm2d(num_features = int(self.img_channels * outMultFactor)),
-                nn.ReLU(),
-                #nn.MaxPool2d(kernel_size = 2)
-                AvgPool2d(kernel_size = 2)
-            )
-
-        # update values
-        self.img_channels = int(self.img_channels * outMultFactor)
-        self.img_width = self.img_width/2
-        self.img_height = self.img_height/2
-
-        return conv_layer
-
-    """
-    [private] Creates type 2 layer in CNN
-    """
-    def __addLayerConvReluDropout(self, outMultFactor = 2):
-        # create a new convolutional layer
-        conv_layer = nn.Sequential(
-            nn.Conv2d(
-                in_channels = self.img_channels,           # in the previous layer out_channel = 12
-                out_channels = int(self.img_channels * outMultFactor),
-                kernel_size = self.kernel_size,
-                stride = self.stride,
-                padding = self.padding
-            ),
-            nn.ReLU(),
-            nn.Dropout(p = 0.15),
-            nn.ReLU()
-        )
-
-        # update values
-        self.img_channels = int(self.img_channels * outMultFactor)
-
-        return conv_layer
-    
-    """
+    """ 
     [private] Adds a convolutional layer
     """
     def __addLayerConv__(self, outMultFactor = 2):
@@ -267,66 +209,26 @@ class CNNClassifier(nn.Module):
                 out_features = in_out_1[1]
             ),
             nn.ReLU(),
-            # nn.Dropout(p = 0.25),
+            nn.Dropout(p = 0.5),
             nn.Linear(
                 in_features = in_out_2[0],
                 out_features = in_out_2[1]
             ),
             nn.ReLU(),
-            # nn.Dropout(p = 0.25),
+            nn.Dropout(p = 0.5),
             nn.Linear(
                 in_features = in_out_3[0],
                 out_features = in_out_3[1]
             ),
-            # nn.Softmax(dim = 1)
+            nn.Softmax(dim = 1)
         )
 
         return classifier_layer
 
-    """
-    [private] Creates a type 3 layer in CNN
-    """
-    def __addLayerConvBatchNorm(self, outMultFactor = 2):
-        # create a new convolutional layer
-        conv_layer = nn.Sequential(
-            nn.Conv2d(
-                in_channels = self.img_channels,           # in the previous layer out_channel = 12
-                out_channels = int(self.img_channels * outMultFactor),
-                kernel_size = self.kernel_size,
-                stride = self.stride,
-                padding = self.padding
-            ),
-            nn.BatchNorm2d(num_features = int(self.img_channels * outMultFactor)),
-            nn.ReLU(),
-        )
-
-        # update values
-        self.img_channels = int(self.img_channels * outMultFactor)
-
-        return conv_layer
-
-    """
-    [private] Creates a fully connected (final) layer in CNN
-    """
-    def __addLayerFC(self):
-        fc_layer = nn.Sequential(
-            nn.Linear(
-                in_features = int(self.img_channels * self.img_width * self.img_height),
-                out_features = int(self.num_classes)
-            ),
-            nn.Softmax(dim = 1)
-        )
-        #fc_layer = nn.Linear(
-        #    in_features = int(self.img_channels * self.img_width * self.img_height),
-        #    out_features = int(self.num_classes)
-        #)
-
-        return fc_layer
-
 """
 Trains the model
     train_path = path to the train data folder (each category in its own folder)
-    test_path = path to the test data folder (each category in its own folder)
+    val_path = path to the validation data folder (each category in its own folder)
     epochs = number of epochs to run
     learning_rate = learning rate of the model
     weight_decay = weight decay when learning to avoid overfitting
@@ -336,7 +238,7 @@ Trains the model
 """
 def train(model,
     train_path = None,
-    test_path = None,
+    val_path = None,
     epochs = None,
     learning_rate = 0.05,
     weight_decay = 0.01,
@@ -345,7 +247,7 @@ def train(model,
     verbose = True,
 ):
     assert train_path, "ERROR: train path not provided! Exiting..."
-    assert test_path, "ERROR: test path not provided! Exiting..."
+    assert val_path, "ERROR: validation path not provided! Exiting..."
 
     # get folder names which will be our classes
     root = pathlib.Path(train_path)
@@ -378,15 +280,15 @@ def train(model,
         shuffle = True
     )
 
-    testDataLoader = DataLoader(
-        torchvision.datasets.ImageFolder(test_path, transform = model.transformer),
+    valDataLoader = DataLoader(
+        torchvision.datasets.ImageFolder(val_path, transform = model.transformer),
         batch_size = model.batch_size,
         shuffle = True
     )
 
-    # calculating the size of training and testing images
+    # calculating the size of training and validation images
     img_train_count = len(glob.glob(train_path + '/**/*.jpg'))
-    img_test_count = len(glob.glob(test_path + '/**/*.jpg'))
+    img_val_count = len(glob.glob(val_path + '/**/*.jpg'))
 
     # create loss function and optimizer
     loss_function = nn.CrossEntropyLoss()
@@ -394,12 +296,14 @@ def train(model,
 
     if verbose:
         print("==> Data loaders created...")
-        print(f"==> Number of train/test imgs: {img_train_count}/{img_test_count}")
+        print(f"==> Number of train/val imgs: {img_train_count}/{img_val_count}")
         print("==> Loss function initialized: CrossEntropyLoss")
         print("==> Optimizer initialized: Adam optimizer")
         print("==> Training and evaluation started...\n")
 
     # ---------------- MODEL TRAINING AND EVALUATION ----------------
+    tloss_list = []
+    val_acc_list = []
     best_accuracy = 0.0
     for epoch in range(0, epochs):
         # ---------------------- TRAINING ---------------------------
@@ -439,6 +343,7 @@ def train(model,
         # calculate accuracy and loss
         train_accuracy = train_accuracy / img_train_count
         train_loss = train_loss / img_train_count
+        tloss_list.append(train_loss)
 
         # ----------------------- EVALUATION ------------------------
         if verbose:
@@ -446,8 +351,8 @@ def train(model,
 
         model.eval()
 
-        test_accuracy = 0.0
-        for i, (images, labels) in enumerate(testDataLoader):
+        val_accuracy = 0.0
+        for i, (images, labels) in enumerate(valDataLoader):
             if torch.cuda.is_available():
                 images = images.cuda()
                 labels = labels.cuda()
@@ -455,23 +360,26 @@ def train(model,
             # get prediction
             outputs = model(images)
             _, prediction = torch.max(outputs.data, 1)
-            test_accuracy += int(torch.sum(prediction == labels.data))
+            val_accuracy += int(torch.sum(prediction == labels.data))
 
-        test_accuracy = test_accuracy / img_test_count
+        val_accuracy = val_accuracy / img_val_count
+        val_acc_list.append(val_accuracy)
 
         # --------------------- MANAGE RESULTS ----------------------
         if verbose:
             print(f"\t---> train_loss: {train_loss:.3f}")
             print(f"\t---> train_acc:  {train_accuracy:.3f}")
-            print(f"\t---> test_acc:   {test_accuracy:.3f}")
+            print(f"\t---> val_acc:   {val_accuracy:.3f}")
 
         # save the best model
-        if export_model and test_accuracy > best_accuracy:
+        if export_model and val_accuracy > best_accuracy:
             if verbose:
                 print("==> Saving the model...")
 
             model.exportModel(model_name)
-            best_accuracy = test_accuracy
+            best_accuracy = val_accuracy
+
+    return val_acc_list, tloss_list
 
     # --------------- END  OF TRAINING AND EVALUATION ---------------
 
