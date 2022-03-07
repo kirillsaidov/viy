@@ -1,8 +1,8 @@
 """
 README: IMPORTANT!
 
-    BEFORE USING THE MODEL MODIFY THE createLayers() AND forward() FUNCTIONS. 
-    ADD OR REMOVE LAYERS TO YOUR LIKING, OR USE THE DEFAULTS. 
+    BEFORE USING THE MODEL MODIFY THE createLayers() AND forward() FUNCTIONS.
+    ADD OR REMOVE LAYERS TO YOUR LIKING, OR USE THE DEFAULTS.
     IN THAT CASE THERE IS NOTHING TO CHANGE.
 """
 
@@ -59,7 +59,7 @@ class CNNClassifier(nn.Module):
         padding = 1,
         stride = 1,
         random_horizontal_flip = 0.5,
-        random_rotation = 30, 
+        random_rotation = 30,
         img_norm_mean = [0.5, 0.5, 0.5],
         img_norm_std = [0.5, 0.5, 0.5],
         img_channels = 3
@@ -84,6 +84,8 @@ class CNNClassifier(nn.Module):
                 transforms.RandomHorizontalFlip(random_horizontal_flip),
                 transforms.RandomRotation(random_rotation),
                 transforms.RandomPerspective(),
+                transforms.RandomGrayscale(p = 0.5),
+                transforms.ColorJitter(0.5, 0.5, 0.5, 0.5),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean = img_norm_mean,
@@ -103,25 +105,24 @@ class CNNClassifier(nn.Module):
         self.layer_2 = self.__addLayerConv__(1)
         self.layer_3 = self.__addLayerConv__(1)
         self.layer_4 = self.__addLayerMaxPool__()
-        
+
         self.layer_5 = self.__addLayerConv__(2)
         self.layer_6 = self.__addLayerConv__(1)
         self.layer_7 = self.__addLayerMaxPool__()
 
-        # self.layer_8 = self.__addLayerConv__(2)
-        # self.layer_9 = self.__addLayerConv__(1)
-        # self.layer_10 = self.__addLayerMaxPool__()
-
-        # self.layer_11 = self.__addLayerConv__(2)
-        # self.layer_12 = self.__addLayerConv__(1)
-        # self.layer_13 = self.__addLayerConv__(1)
-        # self.layer_14 = self.__addLayerMaxPool__()
-
-        # self.layer_15 = self.__addLayerConv__(2)
-        # self.layer_16 = self.__addLayerConv__(1)
-        # self.layer_17 = self.__addLayerConv__(1)
-        # self.layer_18 = self.__addLayerMaxPool__()
-
+        self.layer_8 = self.__addLayerConv__(2)
+        self.layer_9 = self.__addLayerConv__(1)
+        self.layer_10 = self.__addLayerMaxPool__()
+        """
+        self.layer_11 = self.__addLayerConv__(2)
+        self.layer_12 = self.__addLayerConv__(1)
+        self.layer_13 = self.__addLayerConv__(1)
+        self.layer_14 = self.__addLayerMaxPool__()
+        self.layer_15 = self.__addLayerConv__(2)
+        self.layer_16 = self.__addLayerConv__(1)
+        self.layer_17 = self.__addLayerConv__(1)
+        self.layer_18 = self.__addLayerMaxPool__()
+        """
         self.layer_fc = self.__addLayerClassifier__()
 
     """
@@ -132,21 +133,25 @@ class CNNClassifier(nn.Module):
         out = self.layer_2(out)
         out = self.layer_3(out)
         out = self.layer_4(out)
+
         out = self.layer_5(out)
         out = self.layer_6(out)
         out = self.layer_7(out)
-        # out = self.layer_8(out)
-        # out = self.layer_9(out)
-        # out = self.layer_10(out)
-        # out = self.layer_11(out)
-        # out = self.layer_12(out)
-        # out = self.layer_13(out)
-        # out = self.layer_14(out)
-        # out = self.layer_15(out)
-        # out = self.layer_16(out)
-        # out = self.layer_17(out)
-        # out = self.layer_18(out)
-        
+
+        out = self.layer_8(out)
+        out = self.layer_9(out)
+        out = self.layer_10(out)
+
+        """
+        out = self.layer_11(out)
+        out = self.layer_12(out)
+        out = self.layer_13(out)
+        out = self.layer_14(out)
+        out = self.layer_15(out)
+        out = self.layer_16(out)
+        out = self.layer_17(out)
+        out = self.layer_18(out)
+        """
         # reshaping the matrix into vector of data
         # out = out.view(out.size(0), -1)
 
@@ -162,7 +167,7 @@ class CNNClassifier(nn.Module):
         model_scripted = torch.jit.script(self)
         model_scripted.save(model_name)
 
-    """ 
+    """
     [private] Adds a convolutional layer
     """
     def __addLayerConv__(self, outMultFactor = 2):
@@ -175,7 +180,10 @@ class CNNClassifier(nn.Module):
                 stride = self.stride,
                 padding = self.padding
             ),
-            nn.ReLU()
+            nn.BatchNorm2d(
+                num_features = int(self.img_channels * outMultFactor)
+            ),
+            nn.ReLU(),
         )
 
         # update values
@@ -183,16 +191,22 @@ class CNNClassifier(nn.Module):
 
         return conv_layer
 
+    """
+    [private] Adds a max pool layer
+    """
     def __addLayerMaxPool__(self, kernel_size = 2):
         pool_layer = nn.Sequential(
-            nn.AvgPool2d(kernel_size = kernel_size),
+            nn.MaxPool2d(kernel_size = kernel_size, stride = kernel_size),
         )
 
         self.img_width = self.img_width/kernel_size
         self.img_height = self.img_height/kernel_size
-        
+
         return pool_layer
-    
+
+    """
+    [private] Adds a fully connected layer
+    """
     def __addLayerClassifier__(self):
         # in-out features data
         in_out_1 = (
@@ -208,14 +222,14 @@ class CNNClassifier(nn.Module):
                 in_features = in_out_1[0],
                 out_features = in_out_1[1]
             ),
+            nn.BatchNorm1d(num_features = in_out_1[1]),
             nn.ReLU(),
-            nn.Dropout(p = 0.5),
             nn.Linear(
                 in_features = in_out_2[0],
                 out_features = in_out_2[1]
             ),
+            nn.BatchNorm1d(num_features = in_out_2[1]),
             nn.ReLU(),
-            nn.Dropout(p = 0.5),
             nn.Linear(
                 in_features = in_out_3[0],
                 out_features = in_out_3[1]
@@ -230,8 +244,19 @@ Trains the model
     train_path = path to the train data folder (each category in its own folder)
     val_path = path to the validation data folder (each category in its own folder)
     epochs = number of epochs to run
+    optim = optimizer function [
+        'Adam', 'RAdam', 'SGD',
+        'ASGD', 'Adagrad', 'Adadelta',
+        'AdamW', 'Adamax', 'RMSProp'
+    ]
     learning_rate = learning rate of the model
     weight_decay = weight decay when learning to avoid overfitting
+    momentum = a degree of moving average that denoises the data
+    alpha = smoothing constant (power for eta update in case of ASGD model)
+    lambd = decay term (ASGD model)
+    t0 = point at which to start averaging (ASGD model)
+    amsgrad = helps in deciding whether AMSgrad algorithm will be used or not
+    centered = the gradient is normalized by an estimation of its variance
     model_name = custom model name (best.pt)
     export_model = export the model or not
     verbose = verbosity to print every step
@@ -240,8 +265,15 @@ def train(model,
     train_path = None,
     val_path = None,
     epochs = None,
+    optim = 'Adam',
     learning_rate = 0.05,
     weight_decay = 0.01,
+    momentum = 0.9,
+    alpha = 0.75,
+    lambd = 0.0001,
+    t0 = 1000000.0,
+    amsgrad = False,
+    centered = False,
     model_name = "best.pt",
     export_model = True,
     verbose = True,
@@ -257,7 +289,7 @@ def train(model,
     for i in classes:
         if i.startswith("."):
             classes.remove(i)
-    
+
     # save classes
     num_classes = len(classes)
     with open("classes.txt", "w") as f:
@@ -277,13 +309,15 @@ def train(model,
     trainDataLoader = DataLoader(
         torchvision.datasets.ImageFolder(train_path, transform = model.transformer),
         batch_size = model.batch_size,
-        shuffle = True
+        shuffle = True,
+        drop_last = True,
     )
 
     valDataLoader = DataLoader(
         torchvision.datasets.ImageFolder(val_path, transform = model.transformer),
         batch_size = model.batch_size,
-        shuffle = True
+        shuffle = True,
+        drop_last = True,
     )
 
     # calculating the size of training and validation images
@@ -292,13 +326,31 @@ def train(model,
 
     # create loss function and optimizer
     loss_function = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+    optimizer = None
+    if optim == 'Adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+    if optim == 'RAdam':
+        optimizer = torch.optim.RAdam(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+    elif optim == 'SGD':
+        optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate, momentum = momentum)
+    elif optim == 'ASGD':
+        optimizer = torch.optim.ASGD(model.parameters(), lr = learning_rate, lambd = lambd, alpha = alpha, t0 = t0)
+    elif optim == 'Adagrad':
+        optimizer = torch.optim.Adagrad(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+    elif optim == 'Adadelta':
+        optimizer = torch.optim.Adadelta(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+    elif optim == 'AdamW':
+        optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate, weight_decay = weight_decay, amsgrad = amsgrad)
+    elif optim == 'Adamax':
+        optimizer = torch.optim.Adamax(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+    elif optim == 'RMSprop':
+        optimizer = torch.optim.RMSprop(model.parameters(), lr = learning_rate, weight_decay = weight_decay, momentum = momentum, centered = centered, alpha = alpha)
 
     if verbose:
         print("==> Data loaders created...")
         print(f"==> Number of train/val imgs: {img_train_count}/{img_val_count}")
         print("==> Loss function initialized: CrossEntropyLoss")
-        print("==> Optimizer initialized: Adam optimizer")
+        print("==> Optimizer initialized: {optim} optimizer")
         print("==> Training and evaluation started...\n")
 
     # ---------------- MODEL TRAINING AND EVALUATION ----------------
@@ -411,7 +463,7 @@ def predict(model = None, img_path = None, transformer = None, classes_path = No
         img_path = [img_path]
     else:
         img_path = glob.glob(img_path + '/*.jpg')
-       
+
     # read classes from a file
     classes = []
     with open(classes_path, "r") as f:
@@ -440,61 +492,18 @@ def predict(model = None, img_path = None, transformer = None, classes_path = No
 
         # send images to GPU if available
         if torch.cuda.is_available():
-            img_tensor.cuda()    
-    
+            img_tensor.cuda()
+
         # predict
         out = model(img_tensor)
-    
+
         # get the class with the maximum probability
         class_id = out.data.numpy().argmax()
-    
+
         # get class name
         pred.append({'in': i, 'out': classes[class_id]})
-    
+
     if verbose:
         print(f"==> DONE.\n")
 
     return pred
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
