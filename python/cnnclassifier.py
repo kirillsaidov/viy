@@ -476,7 +476,7 @@ def predict(model = None, img_path = None, transformer = None, classes_path = No
         print(f"==> Loaded: {classes}")
 
     # predict
-    pred = []
+    pred = dict()
     for i in img_path:
         if verbose:
             print(f"Predicting: {i}")
@@ -488,20 +488,20 @@ def predict(model = None, img_path = None, transformer = None, classes_path = No
         img_tensor = transformer(img).float()
 
         # PyTorch treats all images as batches. We need to insert an extra batch dimension.
-        img_tensor = img_tensor.unsqueeze_(0)
+        img_tensor = img_tensor.unsqueeze(0)
 
         # send images to GPU if available
         if torch.cuda.is_available():
-            img_tensor.cuda()
+            img_tensor = img_tensor.cuda()
 
         # predict
-        out = model(img_tensor)
+        out = model(img_tensor).cpu()
 
         # get the class with the maximum probability
         class_id = out.data.numpy().argmax()
 
         # get class name
-        pred.append({'in': i, 'out': classes[class_id]})
+        pred.update({i: classes[class_id]})
 
     if verbose:
         print(f"==> DONE.\n")
