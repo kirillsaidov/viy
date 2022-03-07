@@ -21,24 +21,24 @@ optim = optimizer function [
 ASGD, SGD and Adadelta are the best optimizers.
 """
 
-train_path = '../data/gender/train'
-val_path = '../data/gender/val'
-epochs = 17
+train_path = '../data/data_age/train'
+val_path = '../data/data_age/val'
+epochs = 120
 batch_size = 32
-lr = 0.05
+lr = 0.1
 optimizer = 'ASGD'
 
 model = cnn.CNNClassifier(
-    num_classes = 2,
+    num_classes = 10,
     batch_size = batch_size,
     img_width = 64,
     img_height = 64,
     # age
-    #img_norm_mean = [0.63154647, 0.48489257, 0.41346439],
-    #img_norm_std = [0.21639832, 0.19404103, 0.18550038]
+    img_norm_mean = [0.63154647, 0.48489257, 0.41346439],
+    img_norm_std = [0.21639832, 0.19404103, 0.18550038]
     # gender
-    img_norm_mean = [0.65625078, 0.48664141, 0.40608295],
-    img_norm_std = [0.20471508, 0.17793475, 0.16603905]
+    # img_norm_mean = [0.65625078, 0.48664141, 0.40608295],
+    # img_norm_std = [0.20471508, 0.17793475, 0.16603905]
 ).to(device)
 
 val_acc, loss = cnn.train(
@@ -51,7 +51,7 @@ val_acc, loss = cnn.train(
     alpha = 0.75,
     lambd = 0.0001,
     t0 = 1000000.0,
-    learning_rate = lr
+    learning_rate = lr,
 )
 
 plt.plot(val_acc)
