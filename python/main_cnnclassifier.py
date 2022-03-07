@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import cnnclassifier as cnn
 from yolov5model import getDevice
 
+device = torch.device(getDevice())
+
 # TRAINING
 
 """
@@ -19,14 +21,13 @@ optim = optimizer function [
 ASGD, SGD and Adadelta are the best optimizers.
 """
 
-train_path = '../data/data_gender/train'
-val_path = '../data/data_gender/val'
+train_path = '../data/gender/train'
+val_path = '../data/gender/val'
 epochs = 17
 batch_size = 32
 lr = 0.05
 optimizer = 'ASGD'
 
-device = torch.device(getDevice())
 model = cnn.CNNClassifier(
     num_classes = 2,
     batch_size = batch_size,
@@ -65,20 +66,19 @@ plt.show()
 
 # PREDICTING
 """
-pred_path = '../data/age/pred'
+pred_path = '../data/gender/pred/131452.jpg.jpg'
 transformer = transforms.Compose([
-    transforms.Resize((128, 128)),
+    transforms.Resize((64, 64)),
     transforms.ToTensor(),
     transforms.Normalize(
-        mean = [0.5, 0.5, 0.5],
-        std = [0.5, 0.5, 0.5]
+        mean = [0.65625078, 0.48664141, 0.40608295],
+        std = [0.20471508, 0.17793475, 0.16603905]
     )
 ])
 
-model = cnn.loadModel("best.pt")
+model = cnn.loadModel("best.pt").to(device)
 pred = cnn.predict(model, pred_path, transformer, "classes.txt")
 
 for (key, value) in pred.items():
     print(f"{key}\t: {value}")
-
 """
