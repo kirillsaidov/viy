@@ -1,9 +1,10 @@
 from scipy.spatial import distance as dist
 from collections import OrderedDict
 import numpy as np
+import time
 
 class CentroidTracker:
-    def __init__(self, maxDisappeared=50, maxDistance=50):
+    def __init__(self, trackerMemoryDuration_ms = 50, maxDistance = 50):
         # initialize the next unique object ID along with two ordered
         # dictionaries used to keep track of mapping a given object
         # ID to its centroid and number of consecutive frames it has
@@ -16,7 +17,7 @@ class CentroidTracker:
         # store the number of maximum consecutive frames a given
         # object is allowed to be marked as "disappeared" until we
         # need to deregister the object from tracking
-        self.maxDisappeared = maxDisappeared
+        self.trackerMemoryDuration_ms = trackerMemoryDuration_ms
 
         # store the maximum distance between centroids to associate
         # an object -- if the distance is larger than this maximum
@@ -45,18 +46,25 @@ class CentroidTracker:
             # loop over any existing tracked objects and mark them
             # as disappeared
             for objectID in list(self.disappeared.keys()):
+                """ OLD CODE
                 self.disappeared[objectID] += 1
-
                 # if we have reached a maximum number of consecutive
                 # frames where a given object has been marked as
                 # missing, deregister it
-                if self.disappeared[objectID] > self.maxDisappeared:
+                if self.disappeared[objectID] > self.trackerMemoryDuration_ms:
+                    self.deregister(objectID)
+                """
+
+                # compute how much time has passed since the object was last seen
+                # in milliseconds
+                timeSinceLastSeen = int((time.time() - self.disappeared[objectID]) * 1000)
+                if timeSinceLastSeen > self.trackerMemoryDuration_ms:
                     self.deregister(objectID)
 
-            # return early as there are no centroids or tracking info
-            # to update
+            # return None as there are no centroids or tracking info to update
             # return self.objects
-            return self.bbox
+            # return self.bbox
+            return None
 
         # initialize an array of input centroids for the current frame
         inputCentroids = np.zeros((len(rects), 2), dtype="int")
@@ -127,7 +135,7 @@ class CentroidTracker:
                 objectID = objectIDs[row]
                 self.objects[objectID] = inputCentroids[col]
                 self.bbox[objectID] = inputRects[col]  # CHANGE
-                self.disappeared[objectID] = 0
+                self.disappeared[objectID] = time.time()
 
                 # indicate that we have examined each of the row and
                 # column indexes, respectively
@@ -143,23 +151,33 @@ class CentroidTracker:
             # equal or greater than the number of input centroids
             # we need to check and see if some of these objects have
             # potentially disappeared
+            # : if number of input centroids <= existing centroids
             if D.shape[0] >= D.shape[1]:
                 # loop over the unused row indexes
                 for row in unusedRows:
                     # grab the object ID for the corresponding row
                     # index and increment the disappeared counter
                     objectID = objectIDs[row]
-                    self.disappeared[objectID] += 1
 
+                    """ OLD CODE
+                    # self.disappeared[objectID] += 1
                     # check to see if the number of consecutive
                     # frames the object has been marked "disappeared"
                     # for warrants deregistering the object
-                    if self.disappeared[objectID] > self.maxDisappeared:
+                    # if self.disappeared[objectID] > self.trackerMemoryDuration_ms:
+                    #     self.deregister(objectID)
+                    """
+
+                    # compute how much time has passed since the object was last seen
+                    # in milliseconds
+                    timeSinceLastSeen = int((time.time() - self.disappeared[objectID]) * 1000)
+                    if timeSinceLastSeen > self.trackerMemoryDuration_ms: # replace trackerMemoryDuration_ms with trackerMemoryDuration
                         self.deregister(objectID)
 
             # otherwise, if the number of input centroids is greater
             # than the number of existing object centroids we need to
             # register each new input centroid as a trackable object
+            # : if number of input centroids > existing centroids
             else:
                 for col in unusedCols:
                     self.register(inputCentroids[col], inputRects[col])
