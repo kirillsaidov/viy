@@ -9,7 +9,7 @@ class YOLOv5Model:
 	"""
 	Initializes the class
 	"""
-	def __init__(self, path_to_weights):
+	def __init__(self, path_to_weights, force_reload = False):
 		# load model
 		self.model = self.loadModel(path_to_weights)
 		self.classes = self.model.names
@@ -23,7 +23,7 @@ class YOLOv5Model:
 	Loads YOLOv5 model weights into the memory
 	"""
 	def loadModel(self, path_to_weights):
-		model = torch.hub.load('ultralytics/yolov5', 'custom', path=path_to_weights, force_reload=False)
+		model = torch.hub.load('ultralytics/yolov5', 'custom', path = path_to_weights, force_reload = force_reload)
 		return model
 
 	"""
