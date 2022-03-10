@@ -11,7 +11,7 @@ class YOLOv5Model:
 	"""
 	def __init__(self, path_to_weights, force_reload = False):
 		# load model
-		self.model = self.loadModel(path_to_weights)
+		self.model = self.loadModel(path_to_weights, force_reload)
 		self.classes = self.model.names
 
 		# get device type: cpu or gpu (cuda)
@@ -22,7 +22,7 @@ class YOLOv5Model:
 	"""
 	Loads YOLOv5 model weights into the memory
 	"""
-	def loadModel(self, path_to_weights):
+	def loadModel(self, path_to_weights, force_reload):
 		model = torch.hub.load('ultralytics/yolov5', 'custom', path = path_to_weights, force_reload = force_reload)
 		return model
 
