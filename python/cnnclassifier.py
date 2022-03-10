@@ -113,16 +113,19 @@ class CNNClassifier(nn.Module):
         self.layer_8 = self.__addLayerConv__(2)
         self.layer_9 = self.__addLayerConv__(1)
         self.layer_10 = self.__addLayerMaxPool__()
+
         """
         self.layer_11 = self.__addLayerConv__(2)
         self.layer_12 = self.__addLayerConv__(1)
         self.layer_13 = self.__addLayerConv__(1)
         self.layer_14 = self.__addLayerMaxPool__()
+
         self.layer_15 = self.__addLayerConv__(2)
         self.layer_16 = self.__addLayerConv__(1)
         self.layer_17 = self.__addLayerConv__(1)
         self.layer_18 = self.__addLayerMaxPool__()
         """
+
         self.layer_fc = self.__addLayerClassifier__()
 
     """
@@ -132,6 +135,7 @@ class CNNClassifier(nn.Module):
         out = self.layer_1(X)
         out = self.layer_2(out)
         out = self.layer_3(out)
+        # out = out + self.layer_3(out) # residual layer
         out = self.layer_4(out)
 
         out = self.layer_5(out)
@@ -146,12 +150,16 @@ class CNNClassifier(nn.Module):
         out = self.layer_11(out)
         out = self.layer_12(out)
         out = self.layer_13(out)
+        # out = out + self.layer_13(out) # residual layer
         out = self.layer_14(out)
+
         out = self.layer_15(out)
         out = self.layer_16(out)
         out = self.layer_17(out)
+        # out = out + self.layer_17(out) # residual layer
         out = self.layer_18(out)
         """
+        
         # reshaping the matrix into vector of data
         # out = out.view(out.size(0), -1)
 
@@ -350,7 +358,7 @@ def train(model,
         print("==> Data loaders created...")
         print(f"==> Number of train/val imgs: {img_train_count}/{img_val_count}")
         print("==> Loss function initialized: CrossEntropyLoss")
-        print("==> Optimizer initialized: {optim} optimizer")
+        print(f"==> Optimizer initialized: {optim} optimizer")
         print("==> Training and evaluation started...\n")
 
     # ---------------- MODEL TRAINING AND EVALUATION ----------------

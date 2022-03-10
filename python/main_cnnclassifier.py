@@ -23,9 +23,9 @@ ASGD, SGD and Adadelta are the best optimizers.
 
 train_path = '../data/data_age/train'
 val_path = '../data/data_age/val'
-epochs = 120
+epochs = 1800
 batch_size = 32
-lr = 0.1
+lr = 0.07
 optimizer = 'ASGD'
 
 model = cnn.CNNClassifier(
