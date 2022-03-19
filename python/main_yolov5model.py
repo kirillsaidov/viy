@@ -9,7 +9,7 @@ import yolov5model
 print('|-------------- STARTING --------------|')
 
 # load model
-model = yolov5model.YOLOv5Model('../yolomt/weights/last.pt')
+model = yolov5model.YOLOv5Model('../yolomt/weights/face_model98n.pt', force_reload = True)
 
 # open webcam
 cap = cv2.VideoCapture(0)
