@@ -3,6 +3,7 @@ import cv2
 import datetime
 import time
 import sys
+from cv2 import rectangle
 import imutils
 from matplotlib import image
 import numpy as np
@@ -13,10 +14,7 @@ from centroidtracker import CentroidTracker
 
 
 # load the model (weights)
-detector = yolov5model.YOLOv5Model('pedestrian_yolov5s.pt')
-
-# http://www.cbsr.ia.ac.cn/users/sfzhang/WiderPerson/
-
+detector = yolov5model.YOLOv5Model('best_yolov5s.pt')
 
 """ OLD CODE
 # load the tracker from CentroidTracker
@@ -26,11 +24,11 @@ tracker = CentroidTracker(maxDisappeared = 55, maxDistance = 50)
 """
 
 # load the tracker from CentroidTracker
-tracker = CentroidTracker(trackerMemoryDuration_ms = 6500, maxDistance = 50)
+tracker = CentroidTracker(trackerMemoryDuration_ms = 0, maxDistance = 50)
 
 def main():
     # read the video file
-    # cap = cv2.VideoCapture('Videos/Video9.mp4')
+    # cap = cv2.VideoCapture('Video10.mp4')
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print('ERROR: Failed to open Video Capture Device!')
@@ -51,12 +49,15 @@ def main():
 
     # DATA to store the : [date, time, number of person]
     main.data = []
+    
+    rectangle_draw = True
 
     while True:
         # get the image from video
         ret, image = cap.read()
         assert ret, 'ERROR: Failed to capture frame!'
 
+        #image = imutils.resize(image, width = 1920, height = 1080)
         image = imutils.resize(image, width = 640, height = 640)
 
         # apply .detect() function from yolov5model.py and get results
@@ -93,17 +94,19 @@ def main():
                 y1 = int(y1)
                 x2 = int(x2)
                 y2 = int(y2)
+                
+                if rectangle_draw == True:
+                    # draw the rectangle
+                    cv2.rectangle(image, (x1, y1), (x2, y2), (0,255,0), 3)
 
-                # draw the rectangle
-                cv2.rectangle(image, (x1, y1), (x2, y2), (0,255,0), 2)
+                    # show the text i.e., ID of object
+                    text = "ID: {}".format(objectId)
+                    cv2.rectangle(image, (x1, y1), (x1+90, y1-25), (0,255,0), -1)
+                    cv2.putText(image, text, (x1, y1 - 5), cv2.FONT_HERSHEY_DUPLEX, 1 , (0, 0, 0), 1)
 
-                # show the text i.e., ID of object
-                text = "ID: {}".format(objectId)
-                cv2.putText(image, text, (x1, y1 - 5), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1 , (0, 0, 255), 1)
-
-                # ❌❌❌❌❌❌❌❌❌❌❌❌ list of objectId ❌❌❌❌❌❌❌❌❌❌❌❌
-                if objectId not in object_id_list:
-                    object_id_list.append(objectId)
+                    # ❌❌❌❌❌❌❌❌❌❌❌❌ list of objectId ❌❌❌❌❌❌❌❌❌❌❌❌
+                    if objectId not in object_id_list:
+                        object_id_list.append(objectId)
 
             # count the LPC and OPC
             lpc_count = len(objects)
@@ -113,8 +116,8 @@ def main():
         lpc_txt = "LPC: {}".format(lpc_count)
         opc_txt = "OPC: {}".format(opc_count)
 
-        cv2.putText(image, lpc_txt, (5,60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
-        cv2.putText(image, opc_txt, (5,90), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
+        #cv2.putText(image, lpc_txt, (5,60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
+        #cv2.putText(image, opc_txt, (5,90), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
 
         # FPS counter
         total_frames = total_frames + 1
@@ -127,7 +130,7 @@ def main():
 
         # showing the FPS on video
         fps_text = "FPS: {:.2f}".format(fps)
-        cv2.putText(image, fps_text, (5,30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
+        #cv2.putText(image, fps_text, (5,30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
 
         # the time that goes by
         now = datetime.datetime.now()
@@ -140,7 +143,7 @@ def main():
 
         # show the time on image/video
         show_time = fps_end_time.strftime("%H:%M:%S")
-        cv2.putText(image, show_time, (5,120), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
+        #cv2.putText(image, show_time, (5,120), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1)
 
         # show the video with results
         cv2.imshow('Application', image)
@@ -178,4 +181,4 @@ del df['Cumulative']
 del df['Difference']
 
 # Save the Dataframe
-df.to_excel('Results for ' + datetime.datetime.now().date().strftime('%d.%m.%Y') + '.xlsx')
+#df.to_excel('Results for ' + datetime.datetime.now().date().strftime('%d.%m.%Y') + '.xlsx')
