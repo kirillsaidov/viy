@@ -114,12 +114,13 @@ class CNNClassifier(nn.Module):
         self.layer_9 = self.__addLayerConv__(1)
         self.layer_10 = self.__addLayerMaxPool__()
 
+        #self.layer_11 = self.__addLayerConv__(1)
+        #self.layer_12 = self.__addLayerMaxPool__()
+        
         """
-        self.layer_11 = self.__addLayerConv__(2)
-        self.layer_12 = self.__addLayerConv__(1)
         self.layer_13 = self.__addLayerConv__(1)
         self.layer_14 = self.__addLayerMaxPool__()
-
+        
         self.layer_15 = self.__addLayerConv__(2)
         self.layer_16 = self.__addLayerConv__(1)
         self.layer_17 = self.__addLayerConv__(1)
@@ -134,8 +135,8 @@ class CNNClassifier(nn.Module):
     def forward(self, X):
         out = self.layer_1(X)
         out = self.layer_2(out)
-        out = self.layer_3(out)
-        # out = out + self.layer_3(out) # residual layer
+        #out = self.layer_3(out)
+        out = out + self.layer_3(out) # residual layer
         out = self.layer_4(out)
 
         out = self.layer_5(out)
@@ -143,12 +144,15 @@ class CNNClassifier(nn.Module):
         out = self.layer_7(out)
 
         out = self.layer_8(out)
-        out = self.layer_9(out)
+        #out = self.layer_9(out)
+        out = out + self.layer_9(out)
         out = self.layer_10(out)
+        
 
+        #out = self.layer_11(out)
+        #out = self.layer_12(out)
+        
         """
-        out = self.layer_11(out)
-        out = self.layer_12(out)
         out = self.layer_13(out)
         # out = out + self.layer_13(out) # residual layer
         out = self.layer_14(out)
@@ -438,7 +442,10 @@ def train(model,
 
             model.exportModel(model_name)
             best_accuracy = val_accuracy
-
+	
+    if verbose:
+        print(f"Best accuracy: {best_accuracy:.3f}")
+	
     return val_acc_list, tloss_list
 
     # --------------- END  OF TRAINING AND EVALUATION ---------------

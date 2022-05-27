@@ -23,16 +23,16 @@ ASGD, SGD and Adadelta are the best optimizers.
 
 train_path = '../data/data_age/train'
 val_path = '../data/data_age/val'
-epochs = 1800
+epochs = 128 * 4
 batch_size = 32
-lr = 0.07
+lr = 0.08
 optimizer = 'ASGD'
 
 model = cnn.CNNClassifier(
-    num_classes = 10,
+    num_classes = 6,
     batch_size = batch_size,
-    img_width = 64,
-    img_height = 64,
+    img_width = 96,
+    img_height = 96,
     # age
     img_norm_mean = [0.63154647, 0.48489257, 0.41346439],
     img_norm_std = [0.21639832, 0.19404103, 0.18550038]
@@ -48,21 +48,22 @@ val_acc, loss = cnn.train(
     epochs = epochs,
     optim = optimizer,
     momentum = 0.7,
-    alpha = 0.75,
+    alpha = 0.7,
     lambd = 0.0001,
     t0 = 1000000.0,
     learning_rate = lr,
+    model_name = "age_model_asgd.pt",
 )
 
-plt.plot(val_acc)
-plt.xlabel('epochs')
-plt.ylabel('validation accuracy')
-plt.show()
+#plt.plot(val_acc)
+#plt.xlabel('epochs')
+#plt.ylabel('validation accuracy')
+#plt.show()
 
-plt.plot(loss)
-plt.xlabel('epochs')
-plt.ylabel('loss')
-plt.show()
+#plt.plot(loss)
+#plt.xlabel('epochs')
+#plt.ylabel('loss')
+#plt.show()
 
 # PREDICTING
 """
