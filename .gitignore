@@ -7,7 +7,9 @@ __internal/
 __pycache__/
 *.pt
 *.txt
+*.mp4
 data/
+yolov5_ultralytics/
 
 # Prerequisites
 *.d
