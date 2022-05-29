@@ -58,6 +58,12 @@ def main():
     cap = cv2.VideoCapture('testvid5.mp4')
     # cap = cv2.VideoCapture(0)
 
+    # get cap properties for VideoWriter
+    vwidth, vheight, vfps = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), cap.get(cv2.CAP_PROP_FPS)
+
+    # create a video writer to save the result
+    vidwriter = cv2.VideoWriter('testvid5_result.mp4', cv2.VideoWriter_fourcc(*'mp4v'), vfps, (vwidth, vheight))
+
     # check if cap is opened
     if not cap.isOpened():
         print('ERROR: Failed to open Video Capture Device!')
@@ -95,7 +101,7 @@ def main():
             break
 
         # get pedestrian boudning boxes
-        frame, list_pedestrian_coords = help_funcs.getPedestrianCoords(model_pedestrian, frame, frame_size = (640, 640))
+        frame, list_pedestrian_coords = help_funcs.getPedestrianCoords(model_pedestrian, frame, frame_size = None)
 
         # update all tracker coordinates
         # the object value contains a tuple of two values (objectId, bounding box data)
@@ -163,6 +169,8 @@ def main():
 
         # show the video with results
         cv2.imshow('VIY', frame)
+        # vidwriter.write(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        vidwriter.write(frame)
 
         # exit when ESCAPE key is presed or X button
         if cv2.waitKey(5) & 0xFF == 27:
@@ -174,33 +182,12 @@ def main():
     # destroy all windows (release memory)
     cv2.destroyAllWindows()
 
+    # close video writer
+    vidwriter.release()
+
     # safe all data
     help_funcs.saveData(data)
 
 
 # execute main code
 main()
-
-# destroy all windows when done
-
-
-# Some manipulation with DataFrame
-# df = pd.DataFrame()
-# date_lst_pedestrian_coords = []
-# time_lst_pedestrian_coords = []
-# human_lst_pedestrian_coords = []
-# for i in data:
-#     date_lst_pedestrian_coords.append(i[0])
-#     time_lst_pedestrian_coords.append(i[1])
-#     human_lst_pedestrian_coords.append(i[2])
-# df['Date'] = date_lst_pedestrian_coords
-# df['At the time'] = time_lst_pedestrian_coords
-# df['Cumulative'] = human_lst_pedestrian_coords
-# df["Difference"] = [np.nan] + df.iloc[:-1]["Cumulative"].tolist()
-# df["There was // person"] = df['Cumulative'] - df["Difference"]
-# df["There was // person"][0] = df["Cumulative"][0]
-# del df['Cumulative']
-# del df['Difference']
-
-# Save the Dataframe
-# df.to_excel('Results for ' + datetime.datetime.now().date().strftime('%d.%m.%Y') + '.xlsx')

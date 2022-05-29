@@ -28,7 +28,8 @@ PURPUR  = (255, 0, 255)
 
 def getPedestrianCoords(model_pedestrian, frame, frame_size = (640, 640)):
     # resize the frame
-    frame = imutils.resize(frame, width = frame_size[0], height = frame_size[1])
+    if frame_size is not None:
+        frame = imutils.resize(frame, width = frame_size[0], height = frame_size[1])
 
     # detect pedestrians
     modelOutput = model_pedestrian.detect(frame)
