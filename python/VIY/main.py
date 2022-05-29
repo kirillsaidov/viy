@@ -25,11 +25,11 @@ device = torch.device(yolov5model.getDevice())
 # load the FACE, PEDESTRIAN model(weights) and create a CentroidTracker
 model_face = yolov5model.YOLOv5Model('weights/face_model96m.pt', force_reload = False)
 model_pedestrian = yolov5model.YOLOv5Model('weights/pedestrian_model79m.pt', force_reload = False)
-tracker = CentroidTracker(trackerMemoryDuration_ms = 600, maxDistance = 50)
+tracker = CentroidTracker(trackerMemoryDuration_ms = 800, maxDistance = 50)
 
 """ load AGE model and age classes
 """
-model_age = cnn.loadModel('weights/age_model521.pt').to(device)
+model_age = cnn.loadModel('weights/age_model521_96x96.pt').to(device)
 classes_age = cnn.readClasses("weights/age_classes.txt")
 transformer_age = transforms.Compose([
     transforms.Resize((96, 96)),
@@ -42,10 +42,10 @@ transformer_age = transforms.Compose([
 
 """ load GENDER model and age classes
 """
-model_gender = cnn.loadModel('weights/gender_model89.pt').to(device)
+model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
 classes_gender = cnn.readClasses("weights/gender_classes.txt")
 transformer_gender = transforms.Compose([
-    transforms.Resize((96, 96)),
+    transforms.Resize((28, 28)),
     transforms.ToTensor(),
     transforms.Normalize(
         [0.65625078, 0.48664141, 0.40608295],
