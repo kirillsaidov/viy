@@ -8,6 +8,7 @@ __pycache__/
 *.pt
 *.txt
 *.mp4
+*.webm
 data/
 yolov5_ultralytics/
 
