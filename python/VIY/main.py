@@ -42,10 +42,11 @@ transformer_age = transforms.Compose([
 
 """ load GENDER model and age classes
 """
-model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
+# model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
+model_gender = cnn.loadModel('weights/gender_model89_96x96.pt').to(device)
 classes_gender = cnn.readClasses("weights/gender_classes.txt")
 transformer_gender = transforms.Compose([
-    transforms.Resize((28, 28)),
+    transforms.Resize((96, 96)),
     transforms.ToTensor(),
     transforms.Normalize(
         [0.65625078, 0.48664141, 0.40608295],
@@ -55,14 +56,14 @@ transformer_gender = transforms.Compose([
 
 def main():
     # open video stream cap
-    cap = cv2.VideoCapture('testvid5.mp4')
+    cap = cv2.VideoCapture('009.MTS')
     # cap = cv2.VideoCapture(0)
 
     # get cap properties for VideoWriter
     vwidth, vheight, vfps = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), cap.get(cv2.CAP_PROP_FPS)
 
     # create a video writer to save the result
-    vidwriter = cv2.VideoWriter('testvid5_result.mp4', cv2.VideoWriter_fourcc(*'mp4v'), vfps, (vwidth, vheight))
+    vidwriter = cv2.VideoWriter('009_result.mp4', cv2.VideoWriter_fourcc(*'mp4v'), vfps, (vwidth, vheight))
 
     # check if cap is opened
     if not cap.isOpened():
@@ -131,7 +132,7 @@ def main():
             df.drop(df[df[0] == 'unknown'].index, inplace = True)
 
             # most frequent age category
-            freq_age = df[0].value_counts().idxmax()
+            freq_age = df[0].value_counts().idxmax() # FIXME: value_counts may be empty, check it before doing idxmax
 
             # count males/females
             gender_counts = df[1].value_counts()

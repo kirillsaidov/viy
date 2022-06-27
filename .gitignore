@@ -1,5 +1,6 @@
 # custom
 .DS_Store
+*.MTS
 bin/
 build/
 lib/
