@@ -12,6 +12,7 @@ __pycache__/
 *.webm
 data/
 yolov5_ultralytics/
+.ipynb_checkpoints/
 
 # Prerequisites
 *.d
