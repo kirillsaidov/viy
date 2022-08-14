@@ -19,6 +19,23 @@ import yolov5model
 import cnnclassifier as cnn
 from centroidtracker import CentroidTracker
 
+'''
+Configs:
+    tracker
+        trackerMemoryDuration_ms    [throughout execution]
+        maxDistance                 [throughout execution]
+    
+    video source
+        video file                  [pre-launch]
+        camera capture              [pre-launch]
+    
+    visuals
+        draw_age                    [throughout execution]
+        draw_info                   [throughout execution]
+        draw_gender                 [throughout execution]
+        draw_pedestrian_bb          [throughout execution]
+'''
+
 # device: cpu or gpu
 device = torch.device(yolov5model.getDevice())
 
