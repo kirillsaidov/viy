@@ -6,75 +6,28 @@ import datetime
 
 # computer vision
 import cv2
-import torch
-from torchvision.transforms import transforms
 
 # data processing
-import numpy as np
 import pandas as pd
 
-# viy packages
+# viy help funcs package
 import model.help_funcs as hf
-import model.yolov5model as yolov5model
-import model.cnnclassifier as cnn
-from model.centroidtracker import CentroidTracker
-
-'''
-Configs:
-    tracker
-        trackerMemoryDuration_ms    [throughout execution]
-        maxDistance                 [throughout execution]
-    
-    video source
-        video file                  [pre-launch]
-        camera capture              [pre-launch]
-    
-    visuals
-        draw_age                    [throughout execution]
-        draw_info                   [throughout execution]
-        draw_gender                 [throughout execution]
-        draw_pedestrian_bb          [throughout execution]
-'''
-
-# device: cpu or gpu
-device = torch.device(yolov5model.getDevice())
-
-# load the FACE, PEDESTRIAN model(weights) and create a CentroidTracker
-model_face = yolov5model.YOLOv5Model('../weights/face_model96m.pt', force_reload = False)
-model_pedestrian = yolov5model.YOLOv5Model('../weights/pedestrian_model79m.pt', force_reload = False)
-tracker = CentroidTracker(trackerMemoryDuration_ms = 800, maxDistance = 50)
-
-""" load AGE model and age classes
-"""
-model_age = cnn.loadModel('../weights/age_model521_96x96.pt').to(device)
-classes_age = cnn.readClasses("../weights/age_classes.txt")
-transformer_age = transforms.Compose([
-    transforms.Resize((96, 96)),
-    transforms.ToTensor(),
-    transforms.Normalize(
-        [0.63154647, 0.48489257, 0.41346439],
-        [0.21639832, 0.19404103, 0.18550038]
-    )
-])
-
-""" load GENDER model and age classes
-"""
-# model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
-model_gender = cnn.loadModel('../weights/gender_model89_96x96.pt').to(device)
-classes_gender = cnn.readClasses("../weights/gender_classes.txt")
-transformer_gender = transforms.Compose([
-    transforms.Resize((96, 96)),
-    transforms.ToTensor(),
-    transforms.Normalize(
-        [0.65625078, 0.48664141, 0.40608295],
-        [0.20471508, 0.17793475, 0.16603905],
-    ),
-])
 
 def main():
+    # initialize
+    configs = hf.viy_setup()
+    model_face = configs['model_face']
+    model_pedestrian = configs['model_pedestrian']
+    tracker = configs['tracker']
+    model_age = configs['model_age']
+    classes_age = configs['classes_age']
+    transformer_age = configs['transformer_age']
+    model_gender = configs['model_gender']
+    classes_gender = configs['classes_gender']
+    transformer_gender = configs['transformer_gender']
+
     # open video stream cap
-    # cap = cv2.VideoCapture('009.MTS')
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(configs['video_file'])
 
     # get cap properties for VideoWriter
     vwidth, vheight, vfps = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), cap.get(cv2.CAP_PROP_FPS)

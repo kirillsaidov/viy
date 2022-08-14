@@ -7,14 +7,16 @@ import datetime
 # computer vision
 import cv2
 import torch
+from torchvision.transforms import transforms
 
 # data processing
 import numpy as np
 import pandas as pd
 
-# custom packages
-import model.yolov5model
+# viy packages
+import model.yolov5model as yolov5model
 import model.cnnclassifier as cnn
+from model.centroidtracker import CentroidTracker
 
 # colors
 RED     = (0, 0, 255)
@@ -26,13 +28,94 @@ YELLOW  = (0, 255, 255)
 CYAN    = (255, 255, 0)
 PURPUR  = (255, 0, 255)
 
+'''
+Configs:
+    tracker
+        trackerMemoryDuration_ms    [throughout execution]
+        maxDistance                 [throughout execution]
+    
+    video source
+        video file                  [pre-launch]
+        camera capture              [pre-launch]
+    
+    visuals
+        draw_age                    [throughout execution]
+        draw_info                   [throughout execution]
+        draw_gender                 [throughout execution]
+        draw_pedestrian_bb          [throughout execution]
+'''
+
 """
 Model configuration setup
 
 Returns: dict of configs
 """
-def viy_setup():
-    pass
+def viy_setup(
+    trackerMemoryDuration_ms = 2000,
+    maxDistance = 50,
+    video_file = None,
+    draw_age = True, 
+    draw_info = True, 
+    draw_gender = True, 
+    draw_pedestrian_bb = True
+):
+    # device: cpu or gpu
+    device = torch.device(yolov5model.getDevice())
+
+    # load the FACE, PEDESTRIAN model(weights) and create a CentroidTracker
+    model_face = yolov5model.YOLOv5Model('../weights/face_model96m.pt', force_reload = False)
+    model_pedestrian = yolov5model.YOLOv5Model('../weights/pedestrian_model79m.pt', force_reload = False)
+    tracker = CentroidTracker(trackerMemoryDuration_ms = trackerMemoryDuration_ms, maxDistance = maxDistance)
+
+    """ load AGE model and age classes
+    """
+    model_age = cnn.loadModel('../weights/age_model521_96x96.pt').to(device)
+    classes_age = cnn.readClasses("../weights/age_classes.txt")
+    transformer_age = transforms.Compose([
+        transforms.Resize((96, 96)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.63154647, 0.48489257, 0.41346439],
+            [0.21639832, 0.19404103, 0.18550038]
+        )
+    ])
+
+    """ load GENDER model and age classes
+    """
+    # model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
+    model_gender = cnn.loadModel('../weights/gender_model89_96x96.pt').to(device)
+    classes_gender = cnn.readClasses("../weights/gender_classes.txt")
+    transformer_gender = transforms.Compose([
+        transforms.Resize((96, 96)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.65625078, 0.48664141, 0.40608295],
+            [0.20471508, 0.17793475, 0.16603905],
+        ),
+    ])
+
+    # all configs
+    configs = dict({
+        'trackmem': trackerMemoryDuration_ms,
+        'trackdist': maxDistance,
+        'video_file': video_file if video_file else 0,
+        'draw_age': draw_age,
+        'draw_info': draw_info,
+        'draw_gender': draw_gender,
+        'draw_pedbb': draw_pedestrian_bb,
+        'device': device,
+        'model_face': model_face,
+        'model_pedestrian': model_pedestrian,
+        'tracker': tracker,
+        'model_age': model_age,
+        'classes_age': classes_age,
+        'transformer_age': transformer_age,
+        'model_gender': model_gender,
+        'classes_gender': classes_gender,
+        'transformer_gender': transformer_gender
+    })
+
+    return configs
 
 """
 Model configuration setup in GUI mode
@@ -40,7 +123,76 @@ Model configuration setup in GUI mode
 Returns: dict of configs
 """
 def viy_gui_setup():
-    pass
+    # ------- get the following from GUI  ------- #
+    """ configs = {
+        trackerMemoryDuration_ms,
+        maxDistance,
+        video_file,
+        draw_age, 
+        draw_info, 
+        draw_gender, 
+        draw_pedestrian_bb
+    }
+    """
+
+    # ------- initialize using the data above  ------- #
+    # device: cpu or gpu
+    device = torch.device(yolov5model.getDevice())
+
+    # load the FACE, PEDESTRIAN model(weights) and create a CentroidTracker
+    model_face = yolov5model.YOLOv5Model('../weights/face_model96m.pt', force_reload = False)
+    model_pedestrian = yolov5model.YOLOv5Model('../weights/pedestrian_model79m.pt', force_reload = False)
+    tracker = CentroidTracker(trackerMemoryDuration_ms = trackerMemoryDuration_ms, maxDistance = maxDistance)
+
+    """ load AGE model and age classes
+    """
+    model_age = cnn.loadModel('../weights/age_model521_96x96.pt').to(device)
+    classes_age = cnn.readClasses("../weights/age_classes.txt")
+    transformer_age = transforms.Compose([
+        transforms.Resize((96, 96)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.63154647, 0.48489257, 0.41346439],
+            [0.21639832, 0.19404103, 0.18550038]
+        )
+    ])
+
+    """ load GENDER model and age classes
+    """
+    # model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
+    model_gender = cnn.loadModel('../weights/gender_model89_96x96.pt').to(device)
+    classes_gender = cnn.readClasses("../weights/gender_classes.txt")
+    transformer_gender = transforms.Compose([
+        transforms.Resize((96, 96)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.65625078, 0.48664141, 0.40608295],
+            [0.20471508, 0.17793475, 0.16603905],
+        ),
+    ])
+
+    # ------- update configs ------- #
+    configs = dict({
+        'trackmem': trackerMemoryDuration_ms,
+        'trackdist': maxDistance,
+        'video_file': video_file if video_file else 0,
+        'draw_age': draw_age,
+        'draw_info': draw_info,
+        'draw_gender': draw_gender,
+        'draw_pedbb': draw_pedestrian_bb,
+        'device': device,
+        'model_face': model_face,
+        'model_pedestrian': model_pedestrian,
+        'tracker': tracker,
+        'model_age': model_age,
+        'classes_age': classes_age,
+        'transformer_age': transformer_age,
+        'model_gender': model_gender,
+        'classes_gender': classes_gender,
+        'transformer_gender': transformer_gender
+    })
+
+    return configs
 
 """
 Finds pedestrians on a frame and extracts their coordinates
