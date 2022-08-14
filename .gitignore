@@ -11,6 +11,7 @@ __pycache__/
 *.mp4
 *.webm
 data/
+results/
 yolov5_ultralytics/
 .ipynb_checkpoints/
 
