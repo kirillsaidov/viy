@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 
 # custom packages
-import yolov5model
-import cnnclassifier as cnn
+import model.yolov5model
+import model.cnnclassifier as cnn
 
 # colors
 RED     = (0, 0, 255)
@@ -26,6 +26,32 @@ YELLOW  = (0, 255, 255)
 CYAN    = (255, 255, 0)
 PURPUR  = (255, 0, 255)
 
+"""
+Model configuration setup
+
+Returns: dict of configs
+"""
+def viy_setup():
+    pass
+
+"""
+Model configuration setup in GUI mode
+
+Returns: dict of configs
+"""
+def viy_gui_setup():
+    pass
+
+"""
+Finds pedestrians on a frame and extracts their coordinates
+
+Params:
+    model_pedestrian = yolov5 pedestrian model
+    frame = video/capture frame
+    frame_size = resize to frame size; default: (w = 640, h = 640)
+
+Returns: (frame, list of pedestrian coordinates)
+"""
 def getPedestrianCoords(model_pedestrian, frame, frame_size = (640, 640)):
     # resize the frame
     if frame_size is not None:
@@ -54,6 +80,21 @@ def getPedestrianCoords(model_pedestrian, frame, frame_size = (640, 640)):
 
     return frame, lst_pedestrian_coords
 
+"""
+Tracks and counts pedestrians on the frame
+
+Params:
+    frame = video/capture frame
+    objects_in_frame = pedestrian coordinates and their ids
+    objects_id_list = all pedestrian ids currently in the frame
+    age_gender_info = pedestrian age and gender info 
+    draw_pedestrian_bb = draw a bounding box around the pedestrian object; default: True
+    draw_age = display pedestrian age information; default: True
+    draw_gender = display pedestrian gender information; default: True
+    dict_list_face = gender and age information tied to a particular face
+
+Returns: (objects_id_list, lpc_count, opc_count, dict_list_face)
+"""
 def processTrackerObjects(frame, objects_in_frame, objects_id_list, age_gender_info, draw_pedestrian_bb = True, draw_age = True, draw_gender = True, dict_list_face = None):
     # expand vars
     model_face, model_age, transformer_age, classes_age, list_age, model_gender, transformer_gender, classes_gender, list_gender = age_gender_info
@@ -102,6 +143,18 @@ def processTrackerObjects(frame, objects_in_frame, objects_id_list, age_gender_i
 
     return objects_id_list, lpc_count, opc_count, dict_list_face
 
+"""
+Predicts pedestrian age and gender
+
+Params:
+    frame = video/capture frame
+    bbox = bounding box face coordinates
+    objectId = object id assigned 
+    dict_list_face = gender and age information tied to a particular face 
+    age_gender_info = model_face, model_age, transformer_age, classes_age, list_age, model_gender, transformer_gender, classes_gender, list_gender
+
+Returns: dict_list_face
+"""
 def predictAgeGender(frame, bbox, objectId, dict_list_face, age_gender_info):
     model_face, model_age, transformer_age, classes_age, list_age, model_gender, transformer_gender, classes_gender, list_gender = age_gender_info
 
@@ -120,6 +173,16 @@ def predictAgeGender(frame, bbox, objectId, dict_list_face, age_gender_info):
 
     return dict_list_face
 
+"""
+Detects a face on a frame
+
+Params:
+    model = face yolov5 model
+    frame = video/capture frame
+    bbox = bounding box face coordinates
+
+Returns: a cropped face image
+"""
 def detectFace(model, frame, bbox):
     # expand bbox
     x1, y1, x2, y2 = bbox
@@ -140,6 +203,15 @@ def detectFace(model, frame, bbox):
     
     return None
 
+"""
+Calculates FPS
+
+Params:
+    fps_start_time = frame start time
+    total_frames = frames passed
+
+Returns: total_frames, fps, fps_end_time
+"""
 def fps(fps_start_time, total_frames):
     total_frames = total_frames + 1
     fps_end_time = datetime.datetime.now()
@@ -153,18 +225,42 @@ def fps(fps_start_time, total_frames):
 
     return total_frames, fps, fps_end_time
 
+"""
+Displays text on frame surface
+"""
 def drawText(frame, text, position = (10, 10), color = RED, fontScale = 1, thickness = 1, lineType = cv2.LINE_AA):
     cv2.putText(frame, text, position, cv2.FONT_HERSHEY_COMPLEX_SMALL, fontScale, color, thickness, lineType)
 
-def saveData(data):
-    df = pd.DataFrame(data, columns = ['date', 'hour', '#people', '#males', '#females', 'age'])
-    saveAsExcel(df, 'data_summary.xlsx')
-    saveAsCSV(df, 'data_summary.csv')
+"""
+Saves VIY data as EXCEL, CSV files
 
-def saveAsExcel(df, filename = 'data_summary.xlsx'):
+Params:
+    data = VIY data
+    filename = save file name
+    csv = save to csv; default: True
+    excel = save to excel; default: True
+
+Returns: total_frames, fps, fps_end_time
+"""
+def saveData(data, filename = 'viy_summary', csv = True, excel = True):
+    df = pd.DataFrame(data, columns = ['date', 'hour', '#people', '#males', '#females', 'age'])
+
+    if excel:
+        saveAsExcel(df, '../results/' + filename + '.xlsx')
+    
+    if csv:
+        saveAsCSV(df, '../results/' + filename + '.csv')
+
+"""
+Saves dataframe to excel file
+"""
+def saveAsExcel(df, filename = 'viy_summary.xlsx'):
     df.to_excel(filename, index = False)
 
-def saveAsCSV(df, filename = 'data_summary.csv'):
+"""
+Saves dataframe to csv file
+"""
+def saveAsCSV(df, filename = 'viy_summary.csv'):
     df.to_csv(filename, index = False, sep = ';')
 
 

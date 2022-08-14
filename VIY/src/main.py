@@ -13,11 +13,11 @@ from torchvision.transforms import transforms
 import numpy as np
 import pandas as pd
 
-# custom packages
-import help_funcs
-import yolov5model
-import cnnclassifier as cnn
-from centroidtracker import CentroidTracker
+# viy packages
+import model.help_funcs as hf
+import model.yolov5model as yolov5model
+import model.cnnclassifier as cnn
+from model.centroidtracker import CentroidTracker
 
 '''
 Configs:
@@ -40,14 +40,14 @@ Configs:
 device = torch.device(yolov5model.getDevice())
 
 # load the FACE, PEDESTRIAN model(weights) and create a CentroidTracker
-model_face = yolov5model.YOLOv5Model('weights/face_model96m.pt', force_reload = False)
-model_pedestrian = yolov5model.YOLOv5Model('weights/pedestrian_model79m.pt', force_reload = False)
+model_face = yolov5model.YOLOv5Model('../weights/face_model96m.pt', force_reload = False)
+model_pedestrian = yolov5model.YOLOv5Model('../weights/pedestrian_model79m.pt', force_reload = False)
 tracker = CentroidTracker(trackerMemoryDuration_ms = 800, maxDistance = 50)
 
 """ load AGE model and age classes
 """
-model_age = cnn.loadModel('weights/age_model521_96x96.pt').to(device)
-classes_age = cnn.readClasses("weights/age_classes.txt")
+model_age = cnn.loadModel('../weights/age_model521_96x96.pt').to(device)
+classes_age = cnn.readClasses("../weights/age_classes.txt")
 transformer_age = transforms.Compose([
     transforms.Resize((96, 96)),
     transforms.ToTensor(),
@@ -60,8 +60,8 @@ transformer_age = transforms.Compose([
 """ load GENDER model and age classes
 """
 # model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
-model_gender = cnn.loadModel('weights/gender_model89_96x96.pt').to(device)
-classes_gender = cnn.readClasses("weights/gender_classes.txt")
+model_gender = cnn.loadModel('../weights/gender_model89_96x96.pt').to(device)
+classes_gender = cnn.readClasses("../weights/gender_classes.txt")
 transformer_gender = transforms.Compose([
     transforms.Resize((96, 96)),
     transforms.ToTensor(),
@@ -73,14 +73,14 @@ transformer_gender = transforms.Compose([
 
 def main():
     # open video stream cap
-    cap = cv2.VideoCapture('009.MTS')
-    # cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture('009.MTS')
+    cap = cv2.VideoCapture(0)
 
     # get cap properties for VideoWriter
     vwidth, vheight, vfps = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), cap.get(cv2.CAP_PROP_FPS)
 
     # create a video writer to save the result
-    vidwriter = cv2.VideoWriter('009_result.mp4', cv2.VideoWriter_fourcc(*'mp4v'), vfps, (vwidth, vheight))
+    vidwriter = cv2.VideoWriter('../results/vid.mp4', cv2.VideoWriter_fourcc(*'mp4v'), vfps, (vwidth, vheight))
 
     # check if cap is opened
     if not cap.isOpened():
@@ -119,21 +119,21 @@ def main():
             break
 
         # get pedestrian boudning boxes
-        frame, list_pedestrian_coords = help_funcs.getPedestrianCoords(model_pedestrian, frame, frame_size = None)
+        frame, list_pedestrian_coords = hf.getPedestrianCoords(model_pedestrian, frame, frame_size = None)
 
         # update all tracker coordinates
         # the object value contains a tuple of two values (objectId, bounding box data)
         objects = tracker.update(list_pedestrian_coords)
 
         # process objects in the current frame and compare them with all object ids in the existing list
-        list_object_id, lpc_count, opc_count, dict_list_face = help_funcs.processTrackerObjects(frame, objects, list_object_id, (
+        list_object_id, lpc_count, opc_count, dict_list_face = hf.processTrackerObjects(frame, objects, list_object_id, (
             model_face,                                                     # FACE
             model_age, transformer_age, classes_age, list_age,              # AGE
             model_gender, transformer_gender, classes_gender, list_gender   # GENDER
         ), draw_pedestrian_bb, draw_age, draw_gender, dict_list_face)
 
         # FPS counter
-        total_frames, fps, fps_end_time = help_funcs.fps(fps_start_time, total_frames)
+        total_frames, fps, fps_end_time = hf.fps(fps_start_time, total_frames)
 
         # the time that goes by
         now = datetime.datetime.now()
@@ -180,10 +180,10 @@ def main():
             fps_text = "FPS: {:.2f}".format(fps)
             show_time = fps_end_time.strftime("%H:%M:%S")
 
-            help_funcs.drawText(frame, lpc_txt, (5, 60), help_funcs.YELLOW)
-            help_funcs.drawText(frame, opc_txt, (5, 90), help_funcs.YELLOW)
-            help_funcs.drawText(frame, fps_text, (5, 30), help_funcs.YELLOW)
-            help_funcs.drawText(frame, show_time, (5, 120), help_funcs.YELLOW)
+            hf.drawText(frame, lpc_txt, (5, 60), hf.YELLOW)
+            hf.drawText(frame, opc_txt, (5, 90), hf.YELLOW)
+            hf.drawText(frame, fps_text, (5, 30), hf.YELLOW)
+            hf.drawText(frame, show_time, (5, 120), hf.YELLOW)
 
         # show the video with results
         cv2.imshow('VIY', frame)
@@ -204,7 +204,7 @@ def main():
     vidwriter.release()
 
     # safe all data
-    help_funcs.saveData(data)
+    hf.saveData(data)
 
 
 # execute main code

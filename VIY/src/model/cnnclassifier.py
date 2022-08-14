@@ -25,7 +25,7 @@ from torch.autograd import Variable
 import torch.functional as F
 
 # yolov5 model
-from yolov5model import getDevice
+from model.yolov5model import getDevice
 
 # warnings
 import warnings
