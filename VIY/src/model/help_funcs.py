@@ -18,6 +18,10 @@ import model.yolov5model as yolov5model
 import model.cnnclassifier as cnn
 from model.centroidtracker import CentroidTracker
 
+# window name
+VIY_WINDOW_ID = "VIY (CTRL+P to open configs)"
+SLIDERS_ID = ('MEMORY DURATION (sec)', 'MAX TRACKING DISTANCE')
+
 # colors
 RED     = (0, 0, 255)
 GREEN   = (0, 255, 0)
@@ -45,12 +49,20 @@ Configs:
         draw_pedestrian_bb          [throughout execution]
 '''
 
+# empty callback function
+def do_nothing(*args):
+    print(*args)
+    pass
+
+""" ###############  VIY CONFIGURATION ############### """
 """
 Model configuration setup
 
 Returns: dict of configs
 """
 def viy_setup(
+    default_frame_width = 1280,
+    default_frame_height = 720,
     trackerMemoryDuration_ms = 2000,
     maxDistance = 50,
     video_file = None,
@@ -94,8 +106,32 @@ def viy_setup(
         ),
     ])
 
+    # create windowID and window GUI
+    cv2.namedWindow(VIY_WINDOW_ID)
+    # cv2.createTrackbar(SLIDERS_ID[0], VIY_WINDOW_ID, 0, 10, do_nothing)
+    # cv2.createTrackbar(SLIDERS_ID[1], VIY_WINDOW_ID, 0, 100, do_nothing)
+    # cv2.setTrackbarPos(SLIDERS_ID[0], VIY_WINDOW_ID, 5)
+    # cv2.setTrackbarPos(SLIDERS_ID[1], VIY_WINDOW_ID, 50)
+    # # cv2.createButton("button5", do_nothing, None, cv2.QT_CHECKBOX, 0);
+    # # simple button
+    # cv2.createButton('hello', 	do_nothing)
+    # # userData
+    # cv2.createButton('bye1', 	do_nothing, [1, 'string'])
+    # cv2.createButton('bye2', 	do_nothing, [[2,3], 'qwerty'])
+    # cv2.createButton('bye3', 	do_nothing, [2,3,4,5,6])
+
+    # # checkbox
+    # cv2.createButton('checkox1', do_nothing, [40, 50], 	1, 0)
+    # cv2.createButton('checkox2', do_nothing, [40, 50], 	1, 1)
+    # # radio
+    # cv2.createButton('r1', 		do_nothing, 1, 			2, 0)
+    # cv2.createButton('r2', 		do_nothing, [2], 			2, 1)
+    # cv2.createButton('r3', 		do_nothing, [3, 'hello'], 2, 0)
+
     # all configs
     configs = dict({
+        'default_frame_width': default_frame_width,
+        'default_frame_height': default_frame_height,
         'trackmem': trackerMemoryDuration_ms,
         'trackdist': maxDistance,
         'video_file': video_file if video_file else 0,
@@ -112,84 +148,7 @@ def viy_setup(
         'transformer_age': transformer_age,
         'model_gender': model_gender,
         'classes_gender': classes_gender,
-        'transformer_gender': transformer_gender
-    })
-
-    return configs
-
-"""
-Model configuration setup in GUI mode
-
-Returns: dict of configs
-"""
-def viy_gui_setup():
-    # ------- get the following from GUI  ------- #
-    """ configs = {
-        trackerMemoryDuration_ms,
-        maxDistance,
-        video_file,
-        draw_age, 
-        draw_info, 
-        draw_gender, 
-        draw_pedestrian_bb
-    }
-    """
-
-    # ------- initialize using the data above  ------- #
-    # device: cpu or gpu
-    device = torch.device(yolov5model.getDevice())
-
-    # load the FACE, PEDESTRIAN model(weights) and create a CentroidTracker
-    model_face = yolov5model.YOLOv5Model('../weights/face_model96m.pt', force_reload = False)
-    model_pedestrian = yolov5model.YOLOv5Model('../weights/pedestrian_model79m.pt', force_reload = False)
-    tracker = CentroidTracker(trackerMemoryDuration_ms = trackerMemoryDuration_ms, maxDistance = maxDistance)
-
-    """ load AGE model and age classes
-    """
-    model_age = cnn.loadModel('../weights/age_model521_96x96.pt').to(device)
-    classes_age = cnn.readClasses("../weights/age_classes.txt")
-    transformer_age = transforms.Compose([
-        transforms.Resize((96, 96)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            [0.63154647, 0.48489257, 0.41346439],
-            [0.21639832, 0.19404103, 0.18550038]
-        )
-    ])
-
-    """ load GENDER model and age classes
-    """
-    # model_gender = cnn.loadModel('weights/gender_model_tiny89_28x28.pt').to(device)
-    model_gender = cnn.loadModel('../weights/gender_model89_96x96.pt').to(device)
-    classes_gender = cnn.readClasses("../weights/gender_classes.txt")
-    transformer_gender = transforms.Compose([
-        transforms.Resize((96, 96)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            [0.65625078, 0.48664141, 0.40608295],
-            [0.20471508, 0.17793475, 0.16603905],
-        ),
-    ])
-
-    # ------- update configs ------- #
-    configs = dict({
-        'trackmem': trackerMemoryDuration_ms,
-        'trackdist': maxDistance,
-        'video_file': video_file if video_file else 0,
-        'draw_age': draw_age,
-        'draw_info': draw_info,
-        'draw_gender': draw_gender,
-        'draw_pedbb': draw_pedestrian_bb,
-        'device': device,
-        'model_face': model_face,
-        'model_pedestrian': model_pedestrian,
-        'tracker': tracker,
-        'model_age': model_age,
-        'classes_age': classes_age,
-        'transformer_age': transformer_age,
-        'model_gender': model_gender,
-        'classes_gender': classes_gender,
-        'transformer_gender': transformer_gender
+        'transformer_gender': transformer_gender,
     })
 
     return configs
@@ -207,7 +166,7 @@ Returns: (frame, list of pedestrian coordinates)
 def getPedestrianCoords(model_pedestrian, frame, frame_size = (640, 640)):
     # resize the frame
     if frame_size is not None:
-        frame = imutils.resize(frame, width = frame_size[0], height = frame_size[1])
+        frame = cv2.resize(frame, frame_size)
 
     # detect pedestrians
     modelOutput = model_pedestrian.detect(frame)
@@ -282,12 +241,12 @@ def processTrackerObjects(frame, objects_in_frame, objects_id_list, age_gender_i
                 if draw_gender:
                     text = dict_list_face[objectId][1]
                     # cv2.rectangle(frame, (x1, y1), (x2, y2), GREEN, 1)
-                    drawText(frame, text, (x1, y1 + 7), GREEN, thickness = 1, fontScale = 0.6)
+                    drawText(frame, text, (x1, y1 + 15), GREEN, thickness = 1, fontScale = 1)
 
                 if draw_age:
                     text = dict_list_face[objectId][0]
                     # cv2.rectangle(frame, (x1, y1), (x2, y2), GREEN, 1)
-                    drawText(frame, text, (x1, y1 + 17), GREEN, thickness = 1, fontScale = 0.6)
+                    drawText(frame, text, (x1, y1 + 35), GREEN, thickness = 1, fontScale = 1)
 
     # count the LPC and OPC
     lpc_count = 0 if objects_in_frame is None else len(objects_in_frame)
